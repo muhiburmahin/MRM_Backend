@@ -1,0 +1,11 @@
+model JobPostingTranslation {
+  id       String     @id @default(uuid()) @db.Uuid
+  jobId    String     @db.Uuid
+  locale   String
+  title    String
+  body     String
+  job      JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  language Language   @relation(fields: [locale], references: [code])
+
+  @@unique([jobId, locale])
+}

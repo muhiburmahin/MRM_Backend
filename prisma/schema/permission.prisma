@@ -1,0 +1,13 @@
+// Permission keys (seed these): 
+//  content:read|write|publish|delete   page:* product:* service:* post:* casestudy:*
+//  media:upload|delete   nav:write   theme:write|publish   settings:write
+//  lead:read|write|export|delete   subscriber:read|export
+//  user:read|invite|write|delete   role:write   audit:read
+//  form:write   email_template:write   redirect:write   announcement:write
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  key         String           @unique
+  group       String // "leads", "content", "users", "site", "brand"
+  description String?
+  roles       RolePermission[]
+}

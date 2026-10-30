@@ -1,0 +1,18 @@
+// Fonts are an allow-list (Google fonts you approve, or uploaded woff2).
+// Why: next/font is build-time; runtime-chosen fonts must be self-hosted @font-face.
+model FontAsset {
+  id        String     @id @default(uuid()) @db.Uuid
+  family    String // "Inter", "Hind Siliguri"
+  source    FontSource @default(GOOGLE)
+  mediaId   String?    @db.Uuid // uploaded woff2 (source = UPLOADED)
+  weights   Int[]      @default([400, 600, 700])
+  scripts   String[]   @default(["latin"]) // latin, bengali …
+  isEnabled Boolean    @default(true)
+
+  media      MediaAsset? @relation(fields: [mediaId], references: [id])
+  headingFor Theme[]     @relation("ThemeHeadingFont")
+  bodyFor    Theme[]     @relation("ThemeBodyFont")
+  bengaliFor Theme[]     @relation("ThemeBengaliFont")
+
+  @@unique([family, source])
+}

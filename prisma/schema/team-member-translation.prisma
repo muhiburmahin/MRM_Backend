@@ -1,0 +1,12 @@
+model TeamMemberTranslation {
+  id        String     @id @default(uuid()) @db.Uuid
+  memberId  String     @db.Uuid
+  locale    String
+  name      String
+  roleTitle String
+  bio       String?
+  member    TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  language  Language   @relation(fields: [locale], references: [code])
+
+  @@unique([memberId, locale])
+}

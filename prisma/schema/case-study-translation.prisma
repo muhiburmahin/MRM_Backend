@@ -1,0 +1,18 @@
+model CaseStudyTranslation {
+  id             String        @id @default(uuid()) @db.Uuid
+  caseStudyId    String        @db.Uuid
+  locale         String
+  title          String
+  summary        String
+  challenge      String?
+  solution       String?
+  result         String?
+  body           Json          @default("{}")
+  status         ContentStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  caseStudy      CaseStudy     @relation(fields: [caseStudyId], references: [id], onDelete: Cascade)
+  language       Language      @relation(fields: [locale], references: [code])
+
+  @@unique([caseStudyId, locale])
+}

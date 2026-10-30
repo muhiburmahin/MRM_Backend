@@ -1,0 +1,10 @@
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  key         String           @unique // owner, admin, editor, sales, viewer
+  name        String
+  description String?
+  isSystem    Boolean          @default(false) // system roles can't be deleted
+  users       User[]
+  invites     UserInvite[]
+  permissions RolePermission[]
+}

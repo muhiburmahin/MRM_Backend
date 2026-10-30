@@ -1,0 +1,14 @@
+model Client {
+  id                  String        @id @default(uuid()) @db.Uuid
+  name                String
+  country             String? // ISO country code, only if verified
+  logoId              String?       @db.Uuid // -> MediaAsset.id
+  websiteUrl          String?
+  isVerified          Boolean       @default(false)
+  evidenceNote        String?
+  permissionGrantedAt DateTime?
+  showOnSite          Boolean       @default(false)
+  sortOrder           Int           @default(0)
+  testimonials        Testimonial[]
+  caseStudies         CaseStudy[]
+}

@@ -1,0 +1,11 @@
+model CaseStudyMedia {
+  id          String     @id @default(uuid()) @db.Uuid
+  caseStudyId String     @db.Uuid
+  mediaId     String     @db.Uuid
+  caption     Json?
+  sortOrder   Int        @default(0)
+  caseStudy   CaseStudy  @relation(fields: [caseStudyId], references: [id], onDelete: Cascade)
+  media       MediaAsset @relation(fields: [mediaId], references: [id])
+
+  @@index([caseStudyId, sortOrder])
+}

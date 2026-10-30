@@ -1,0 +1,10 @@
+model Redirect {
+  id         String   @id @default(uuid()) @db.Uuid
+  fromPath   String   @unique
+  toPath     String
+  statusCode Int      @default(301)
+  isActive   Boolean  @default(true)
+  isAuto     Boolean  @default(false) // created automatically when a slug changes
+  hits       Int      @default(0)
+  createdAt  DateTime @default(now())
+}

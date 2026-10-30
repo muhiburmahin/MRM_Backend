@@ -1,0 +1,10 @@
+// Shared sections (e.g. the "Start a project" band) edited once, used on many pages.
+model ReusableBlock {
+  id        String        @id @default(uuid()) @db.Uuid
+  key       String        @unique
+  name      String
+  type      String
+  data      Json
+  status    ContentStatus @default(PUBLISHED)
+  updatedAt DateTime      @updatedAt
+}

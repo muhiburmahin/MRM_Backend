@@ -1,0 +1,17 @@
+// Newsletter with double opt-in
+model Subscriber {
+  id               String           @id @default(uuid()) @db.Uuid
+  email            String           @unique
+  locale           String?
+  status           SubscriberStatus @default(PENDING)
+  confirmTokenHash String?          @unique
+  consentAt        DateTime
+  policyId         String?          @db.Uuid
+  source           String?
+  ipHash           String?
+  confirmedAt      DateTime?
+  unsubscribedAt   DateTime?
+  createdAt        DateTime         @default(now())
+  language         Language?        @relation(fields: [locale], references: [code])
+  policy           PolicyVersion?   @relation(fields: [policyId], references: [id])
+}

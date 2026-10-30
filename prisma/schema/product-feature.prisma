@@ -1,0 +1,11 @@
+model ProductFeature {
+  id          String  @id @default(uuid()) @db.Uuid
+  productId   String  @db.Uuid
+  icon        String?
+  i18n        Json // { en:{title,description}, bn:{...} }
+  sortOrder   Int     @default(0)
+  isHighlight Boolean @default(false)
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+}

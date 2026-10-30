@@ -1,0 +1,16 @@
+model Office {
+  id             String  @id @default(uuid()) @db.Uuid
+  key            String  @unique
+  countryCode    String // ISO-3166 alpha-2
+  timezone       String // IANA, e.g. Asia/Dhaka (show local hours to foreign clients)
+  isHeadquarters Boolean @default(false)
+  i18n           Json // { en:{name,address,hours}, bn:{...} }
+  phone          String?
+  whatsapp       String?
+  email          String?
+  mapUrl         String?
+  lat            Float?
+  lng            Float?
+  isPublic       Boolean @default(true)
+  sortOrder      Int     @default(0)
+}

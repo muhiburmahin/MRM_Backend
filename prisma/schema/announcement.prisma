@@ -1,0 +1,13 @@
+// Top-of-site banner (launch news, holiday hours …), scheduled
+model Announcement {
+  id            String    @id @default(uuid()) @db.Uuid
+  i18n          Json // { en:{text,linkLabel}, bn:{...} }
+  href          String?
+  style         String    @default("info") // info | promo | warning
+  startsAt      DateTime?
+  endsAt        DateTime?
+  isActive      Boolean   @default(true)
+  isDismissible Boolean   @default(true)
+  showOnPaths   String[] // empty = everywhere
+  createdAt     DateTime  @default(now())
+}

@@ -1,0 +1,101 @@
+// Shared enums. Enums are not models, so they live together in this one file.
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LaunchStage {
+  LIVE
+  BETA
+  PLANNED
+}
+
+enum LeadType {
+  GENERAL
+  PROJECT
+  DEMO
+  PARTNERSHIP
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+  SPAM
+}
+
+enum PolicyKind {
+  PRIVACY
+  TERMS
+  COOKIES
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  BOUNCED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum BillingPeriod {
+  ONE_TIME
+  MONTHLY
+  YEARLY
+  HOURLY
+  CUSTOM
+}
+
+enum ThemeMode {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum FontSource {
+  SYSTEM
+  GOOGLE
+  UPLOADED
+}
+
+enum TrustKind {
+  PARTNER
+  CERTIFICATION
+  AWARD
+  MEMBERSHIP
+  PRESS
+}
+
+enum SubscriberStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  FONT
+  OTHER
+}

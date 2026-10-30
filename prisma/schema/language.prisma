@@ -1,0 +1,19 @@
+model Language {
+  code      String  @id // "en", "bn"
+  name      String // "English", "বাংলা"
+  isDefault Boolean @default(false)
+  isEnabled Boolean @default(true)
+  rtl       Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  pageTranslations     PageTranslation[]
+  productTranslations  ProductTranslation[]
+  serviceTranslations  ServiceTranslation[]
+  industryTranslations IndustryTranslation[]
+  memberTranslations   TeamMemberTranslation[]
+  caseTranslations     CaseStudyTranslation[]
+  postTranslations     PostTranslation[]
+  jobTranslations      JobPostingTranslation[]
+  leads                Lead[]
+  subscribers          Subscriber[]
+}

@@ -1,0 +1,12 @@
+// Tech stack shown on services / portfolio (React, Next.js, Laravel, Flutter, AWS …)
+model Technology {
+  id          String                @id @default(uuid()) @db.Uuid
+  slug        String                @unique
+  name        String
+  category    String? // frontend | backend | mobile | cloud | ai | design
+  iconId      String?               @db.Uuid // -> MediaAsset.id
+  isPublic    Boolean               @default(true)
+  sortOrder   Int                   @default(0)
+  services    ServiceTechnology[]
+  caseStudies CaseStudyTechnology[]
+}

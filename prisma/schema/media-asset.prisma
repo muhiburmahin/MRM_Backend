@@ -1,0 +1,33 @@
+model MediaAsset {
+  id           String    @id @default(uuid()) @db.Uuid
+  folderId     String?   @db.Uuid
+  kind         MediaKind @default(IMAGE)
+  storageKey   String    @unique // key in object storage (R2/S3)
+  url          String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  blurHash     String?
+  isDemoData   Boolean   @default(false) // screenshots with sample data
+  alt          Json? // i18n { en, bn }  (required for IMAGE by API)
+  caption      Json?
+  uploadedById String?   @db.Uuid
+  createdAt    DateTime  @default(now())
+
+  folder         MediaFolder?        @relation(fields: [folderId], references: [id])
+  uploadedBy     User?               @relation("MediaUploader", fields: [uploadedById], references: [id])
+  avatarOf       User[]              @relation("UserAvatar")
+  screenshots    ProductScreenshot[]
+  caseGallery    CaseStudyMedia[]
+  fonts          FontAsset[]
+  themeLogoLight Theme[]             @relation("ThemeLogoLight")
+  themeLogoDark  Theme[]             @relation("ThemeLogoDark")
+  themeLogoMark  Theme[]             @relation("ThemeLogoMark")
+  themeFavicon   Theme[]             @relation("ThemeFavicon")
+  themeOg        Theme[]             @relation("ThemeOg")
+
+  @@index([folderId])
+  @@index([kind])
+}

@@ -1,0 +1,26 @@
+model CaseStudy {
+  id               String    @id @default(uuid()) @db.Uuid
+  slug             String    @unique
+  clientId         String?   @db.Uuid
+  productId        String?   @db.Uuid
+  serviceId        String?   @db.Uuid
+  industryId       String?   @db.Uuid
+  coverId          String?   @db.Uuid // -> MediaAsset.id
+  liveUrl          String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  metrics          Json      @default("[]") // only verifiable figures
+  isVerified       Boolean   @default(false)
+  evidenceNote     String?
+  clientApprovedAt DateTime?
+  publishedAt      DateTime?
+  sortOrder        Int       @default(0)
+
+  client       Client?                @relation(fields: [clientId], references: [id])
+  product      Product?               @relation(fields: [productId], references: [id])
+  service      Service?               @relation(fields: [serviceId], references: [id])
+  industry     Industry?              @relation(fields: [industryId], references: [id])
+  translations CaseStudyTranslation[]
+  technologies CaseStudyTechnology[]
+  gallery      CaseStudyMedia[]
+}

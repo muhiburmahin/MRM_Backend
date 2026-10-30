@@ -1,0 +1,9 @@
+model Industry {
+  id           String                @id @default(uuid()) @db.Uuid
+  slug         String                @unique
+  icon         String?
+  sortOrder    Int                   @default(0)
+  translations IndustryTranslation[]
+  products     ProductIndustry[]
+  caseStudies  CaseStudy[]
+}

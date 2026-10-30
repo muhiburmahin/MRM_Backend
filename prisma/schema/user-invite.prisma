@@ -1,0 +1,15 @@
+// Add a new admin by email invite (no shared passwords)
+model UserInvite {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String
+  roleId      String    @db.Uuid
+  invitedById String?   @db.Uuid
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  role        Role      @relation(fields: [roleId], references: [id])
+  invitedBy   User?     @relation("InviteBy", fields: [invitedById], references: [id])
+
+  @@index([email])
+}

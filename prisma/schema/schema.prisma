@@ -1,0 +1,31 @@
+// =============================================================================
+// MRM Infotech — Dynamic Corporate Website  (schema v2)
+// PostgreSQL · Prisma 6 · Repo: MRMinfotech-backend (multi-file schema: one model per file)
+//
+// CONVENTIONS
+//  1. Big content entities (Page, Product, Service, Industry, Post, CaseStudy,
+//     TeamMember, JobPosting) -> separate *Translation tables
+//     (slug, SEO, publish-state differ per language).
+//  2. Small child items (features, FAQs, nav labels, tags …) -> `i18n Json`
+//     { "en": {...}, "bn": {...} }, validated with Zod in the API.
+//  3. Languages are DATA. Every `locale` column is a real FK to Language.code,
+//     so a typo can never create a ghost language, and a 3rd language needs no migration.
+//  4. TRUST RULE: Client / Testimonial / CaseStudy / TrustBadge are public ONLY when
+//     isVerified = true AND evidenceNote is filled. Enforced in the API AND by
+//     DB CHECK constraints (see constraints.sql).
+//  5. No EduManage / MediSheba operational data lives here — ever.
+//  6. Everything the owner may want to change without a developer is DATA:
+//     brand (Theme), logo, fonts, navigation, pages/blocks, products, services,
+//     pricing, offices, announcements, email templates, forms, SEO, redirects.
+//  7. Media references written as `// -> MediaAsset.id` are plain UUIDs checked by
+//     the API (media-in-use guard). Theme + gallery links are real FKs.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

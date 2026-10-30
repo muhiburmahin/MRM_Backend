@@ -1,0 +1,48 @@
+// One PUBLISHED+active theme drives the whole site via CSS variables injected at
+// render time (no rebuild). A DRAFT theme can be previewed before publishing.
+// API MUST reject saves whose text/background pairs fail WCAG AA (4.5:1) and
+// store the result in contrastReport.
+model Theme {
+  id       String        @id @default(uuid()) @db.Uuid
+  name     String
+  status   ContentStatus @default(DRAFT)
+  isActive Boolean       @default(false) // exactly one active (partial unique index)
+
+  // colors: { primary, primaryForeground, accent, background, surface, text, muted,
+  //           border, success, warning, danger }  (hex)
+  colors          Json
+  darkColors      Json?
+  defaultMode     ThemeMode @default(LIGHT)
+  allowModeToggle Boolean   @default(false)
+
+  radius         String @default("0.5rem")
+  tokens         Json   @default("{}") // allow-listed extras: shadow, spacing scale …
+  contrastReport Json?
+
+  headingFontId String? @db.Uuid
+  bodyFontId    String? @db.Uuid
+  bengaliFontId String? @db.Uuid
+
+  logoLightId String? @db.Uuid // logo for light backgrounds
+  logoDarkId  String? @db.Uuid // logo for dark backgrounds
+  logoMarkId  String? @db.Uuid // small square mark
+  faviconId   String? @db.Uuid
+  defaultOgId String? @db.Uuid // default social-share image
+
+  createdById String?   @db.Uuid
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  headingFont FontAsset?  @relation("ThemeHeadingFont", fields: [headingFontId], references: [id])
+  bodyFont    FontAsset?  @relation("ThemeBodyFont", fields: [bodyFontId], references: [id])
+  bengaliFont FontAsset?  @relation("ThemeBengaliFont", fields: [bengaliFontId], references: [id])
+  logoLight   MediaAsset? @relation("ThemeLogoLight", fields: [logoLightId], references: [id])
+  logoDark    MediaAsset? @relation("ThemeLogoDark", fields: [logoDarkId], references: [id])
+  logoMark    MediaAsset? @relation("ThemeLogoMark", fields: [logoMarkId], references: [id])
+  favicon     MediaAsset? @relation("ThemeFavicon", fields: [faviconId], references: [id])
+  defaultOg   MediaAsset? @relation("ThemeOg", fields: [defaultOgId], references: [id])
+  createdBy   User?       @relation(fields: [createdById], references: [id])
+
+  @@index([status])
+}

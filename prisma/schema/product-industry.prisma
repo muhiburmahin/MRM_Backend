@@ -1,0 +1,8 @@
+model ProductIndustry {
+  productId  String   @db.Uuid
+  industryId String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, industryId])
+}

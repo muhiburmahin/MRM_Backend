@@ -1,0 +1,6 @@
+model PostCategory {
+  id    String @id @default(uuid()) @db.Uuid
+  slug  String @unique
+  i18n  Json
+  posts Post[]
+}

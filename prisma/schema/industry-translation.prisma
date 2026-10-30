@@ -1,0 +1,13 @@
+model IndustryTranslation {
+  id         String        @id @default(uuid()) @db.Uuid
+  industryId String        @db.Uuid
+  locale     String
+  name       String
+  summary    String
+  body       Json          @default("{}")
+  status     ContentStatus @default(DRAFT)
+  industry   Industry      @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  language   Language      @relation(fields: [locale], references: [code])
+
+  @@unique([industryId, locale])
+}

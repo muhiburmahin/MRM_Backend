@@ -1,0 +1,15 @@
+model EmailLog {
+  id                String      @id @default(uuid()) @db.Uuid
+  leadId            String?     @db.Uuid
+  kind              String // lead_notification | auto_reply | invite | system
+  toMasked          String // "a***@example.com"
+  provider          String      @default("resend")
+  providerMessageId String?
+  status            EmailStatus @default(QUEUED)
+  error             String?
+  createdAt         DateTime    @default(now())
+  lead              Lead?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([status, createdAt])
+}

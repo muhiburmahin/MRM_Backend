@@ -1,0 +1,12 @@
+model JobPosting {
+  id           String                  @id @default(uuid()) @db.Uuid
+  slug         String                  @unique
+  type         EmploymentType          @default(FULL_TIME)
+  location     String?
+  isRemote     Boolean                 @default(false)
+  isOpen       Boolean                 @default(true)
+  applyEmail   String?
+  closesAt     DateTime?
+  createdAt    DateTime                @default(now())
+  translations JobPostingTranslation[]
+}

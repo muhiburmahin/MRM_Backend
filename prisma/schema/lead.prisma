@@ -1,0 +1,58 @@
+model Lead {
+  id               String     @id @default(uuid()) @db.Uuid
+  ref              String     @unique // LD-20261010-A7K3
+  formId           String?    @db.Uuid
+  type             LeadType
+  status           LeadStatus @default(NEW)
+  name             String
+  email            String?
+  phone            String? // phone / WhatsApp
+  company          String?
+  country          String?
+  timezone         String? // helps schedule calls with foreign clients
+  preferredContact String? // email | whatsapp | phone | call
+  message          String?
+  payload          Json       @default("{}") // budget, timeline, institution type …
+  estimatedValue   Decimal?   @db.Decimal(12, 2) // pipeline value (internal)
+  currency         String?
+  productId        String?    @db.Uuid
+  serviceId        String?    @db.Uuid
+  locale           String?
+  landingPath      String?
+  submitPath       String?
+  referrer         String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  utmTerm          String?
+  utmContent       String?
+  consentAt        DateTime
+  policyId         String?    @db.Uuid
+  spamScore        Int        @default(0)
+  ipHash           String? // salted hash, never raw IP
+  assignedToId     String?    @db.Uuid
+  firstContactedAt DateTime?
+  retentionUntil   DateTime?
+  anonymizedAt     DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  form        FormDefinition?    @relation(fields: [formId], references: [id])
+  product     Product?           @relation(fields: [productId], references: [id])
+  service     Service?           @relation(fields: [serviceId], references: [id])
+  policy      PolicyVersion?     @relation(fields: [policyId], references: [id])
+  language    Language?          @relation(fields: [locale], references: [code])
+  assignedTo  User?              @relation("LeadAssignee", fields: [assignedToId], references: [id])
+  notes       LeadNote[]
+  changes     LeadStatusChange[]
+  emails      EmailLog[]
+  attachments LeadAttachment[]
+
+  @@index([status, createdAt])
+  @@index([type, createdAt])
+  @@index([assignedToId])
+  @@index([productId])
+  @@index([serviceId])
+  @@index([retentionUntil])
+}

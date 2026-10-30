@@ -1,0 +1,16 @@
+// Partners, certifications, awards, memberships, press mentions.
+model TrustBadge {
+  id           String    @id @default(uuid()) @db.Uuid
+  kind         TrustKind
+  name         String
+  logoId       String?   @db.Uuid // -> MediaAsset.id
+  url          String?
+  i18n         Json? // { en:{description}, bn:{...} }
+  issuedAt     DateTime?
+  isVerified   Boolean   @default(false)
+  evidenceNote String?
+  showOnSite   Boolean   @default(false)
+  sortOrder    Int       @default(0)
+
+  @@index([kind])
+}

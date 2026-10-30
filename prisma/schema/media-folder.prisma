@@ -1,0 +1,8 @@
+model MediaFolder {
+  id       String        @id @default(uuid()) @db.Uuid
+  name     String
+  parentId String?       @db.Uuid
+  parent   MediaFolder?  @relation("FolderTree", fields: [parentId], references: [id])
+  children MediaFolder[] @relation("FolderTree")
+  assets   MediaAsset[]
+}

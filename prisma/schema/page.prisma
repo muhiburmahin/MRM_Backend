@@ -1,0 +1,21 @@
+// blocks JSON = ordered list: [{ id, type, data }]. Allowed types are a code-side
+// registry validated by Zod: hero, rich_text, product_grid, service_grid, feature_list,
+// stats (verified only), logo_wall (verified only), testimonials (verified only),
+// case_studies, process_steps, faq, cta_band, contact_form, post_list, office_list,
+// image_text, video, reusable{key}.
+model Page {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique // home, about, services, contact, privacy …
+  template  String   @default("default") // default | home | contact | legal | landing
+  isSystem  Boolean  @default(false) // system pages can't be deleted
+  parentId  String?  @db.Uuid
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent       Page?             @relation("PageTree", fields: [parentId], references: [id])
+  children     Page[]            @relation("PageTree")
+  translations PageTranslation[]
+  policies     PolicyVersion[]
+  navItems     NavItem[]
+}

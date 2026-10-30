@@ -1,0 +1,22 @@
+model PostTranslation {
+  id             String        @id @default(uuid()) @db.Uuid
+  postId         String        @db.Uuid
+  locale         String
+  slug           String // per-language URL slug
+  title          String
+  excerpt        String?
+  body           String // Markdown/MDX (sanitised on render)
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  scheduledAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?       @db.Uuid
+  noIndex        Boolean       @default(false)
+  post           Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  language       Language      @relation(fields: [locale], references: [code])
+
+  @@unique([postId, locale])
+  @@unique([locale, slug])
+  @@index([status, publishedAt])
+}

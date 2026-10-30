@@ -1,0 +1,9 @@
+// Editable system emails (auto-reply, lead notification, invite, password reset)
+model EmailTemplate {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  i18n      Json // { en:{subject,body}, bn:{...} }  (plain text / safe markup)
+  variables String[] // allowed placeholders: {{name}}, {{ref}} …
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,20 @@
+model ProductTranslation {
+  id             String        @id @default(uuid()) @db.Uuid
+  productId      String        @db.Uuid
+  locale         String
+  name           String
+  tagline        String
+  summary        String
+  body           Json          @default("{}") // audience, problems, useCases, integrations
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?       @db.Uuid
+  noIndex        Boolean       @default(false)
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  language       Language      @relation(fields: [locale], references: [code])
+
+  @@unique([productId, locale])
+  @@index([status, publishedAt])
+}

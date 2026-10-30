@@ -1,0 +1,12 @@
+model PolicyVersion {
+  id          String       @id @default(uuid()) @db.Uuid
+  kind        PolicyKind
+  version     String // "2026-10-01"
+  pageId      String?      @db.Uuid
+  effectiveAt DateTime
+  page        Page?        @relation(fields: [pageId], references: [id])
+  leads       Lead[]
+  subscribers Subscriber[]
+
+  @@unique([kind, version])
+}

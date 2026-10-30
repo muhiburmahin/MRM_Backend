@@ -1,0 +1,14 @@
+model Post {
+  id             String            @id @default(uuid()) @db.Uuid
+  key            String            @unique // internal id shared by all translations (not a URL)
+  authorId       String?           @db.Uuid
+  categoryId     String?           @db.Uuid
+  coverId        String?           @db.Uuid // -> MediaAsset.id
+  readingMinutes Int?
+  isFeatured     Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  author         TeamMember?       @relation(fields: [authorId], references: [id])
+  category       PostCategory?     @relation(fields: [categoryId], references: [id])
+  tags           PostTag[]
+  translations   PostTranslation[]
+}

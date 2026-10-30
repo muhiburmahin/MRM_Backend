@@ -1,0 +1,16 @@
+model ServiceTranslation {
+  id             String        @id @default(uuid()) @db.Uuid
+  serviceId      String        @db.Uuid
+  locale         String
+  name           String
+  summary        String
+  body           Json          @default("{}") // deliverables, process steps, engagement models
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  service        Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  language       Language      @relation(fields: [locale], references: [code])
+
+  @@unique([serviceId, locale])
+}

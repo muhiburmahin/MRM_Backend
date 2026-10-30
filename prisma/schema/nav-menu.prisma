@@ -1,0 +1,5 @@
+model NavMenu {
+  id    String    @id @default(uuid()) @db.Uuid
+  key   String    @unique // header, footer-company, footer-legal …
+  items NavItem[]
+}

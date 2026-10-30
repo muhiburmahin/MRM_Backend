@@ -1,0 +1,11 @@
+// Suggested keys: company.* (legal name, only true facts), contact.*, social.links,
+// seo.defaults, analytics.provider, consent.banner, home.layout,
+// features.blog | features.careers | features.newsletter | features.languageSwitcher
+model SiteSetting {
+  key         String   @id
+  group       String   @default("general")
+  value       Json
+  isPublic    Boolean  @default(false)
+  updatedById String?  @db.Uuid
+  updatedAt   DateTime @updatedAt
+}

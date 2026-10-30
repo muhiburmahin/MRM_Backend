@@ -1,0 +1,8 @@
+model CaseStudyTechnology {
+  caseStudyId  String     @db.Uuid
+  technologyId String     @db.Uuid
+  caseStudy    CaseStudy  @relation(fields: [caseStudyId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([caseStudyId, technologyId])
+}

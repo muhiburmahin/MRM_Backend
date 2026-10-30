@@ -1,0 +1,13 @@
+model Testimonial {
+  id           String    @id @default(uuid()) @db.Uuid
+  clientId     String?   @db.Uuid
+  authorName   String
+  authorRole   String?
+  quote        Json // i18n
+  isVerified   Boolean   @default(false)
+  evidenceNote String?
+  consentAt    DateTime?
+  showOnSite   Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  client       Client?   @relation(fields: [clientId], references: [id])
+}

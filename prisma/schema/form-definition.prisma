@@ -1,0 +1,12 @@
+model FormDefinition {
+  id               String   @id @default(uuid()) @db.Uuid
+  key              String   @unique // contact, project, demo, partnership
+  type             LeadType
+  fields           Json // ordered field config (label i18n, required, type)
+  successMessage   Json // i18n
+  notifyEmails     String[]
+  sendAutoReply    Boolean  @default(true)
+  allowAttachments Boolean  @default(false) // project brief upload (PDF/DOCX, size-limited)
+  isActive         Boolean  @default(true)
+  leads            Lead[]
+}

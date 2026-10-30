@@ -1,0 +1,8 @@
+model ServiceTechnology {
+  serviceId    String     @db.Uuid
+  technologyId String     @db.Uuid
+  service      Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, technologyId])
+}
