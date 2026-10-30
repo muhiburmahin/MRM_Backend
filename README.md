@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MRM Infotech — Backend
 
 NestJS **modular monolith** for the MRM Infotech corporate website: an admin-controlled content system
@@ -103,3 +104,6 @@ The system seed intentionally creates no user and no known-password administrato
 `AuthProvisioningService` provides one-time first-owner provisioning for an explicitly trusted operator call; there is no
 operator CLI or HTTP provisioning route. Provisioning refuses to proceed once any active user exists and stores an
 Argon2id password hash. Do not insert a plaintext password or enable a permanent default account.
+=======
+# MRM_Backend
+>>>>>>> 02993decb4e1fafe06e36e50aff68cb12a6ad748
