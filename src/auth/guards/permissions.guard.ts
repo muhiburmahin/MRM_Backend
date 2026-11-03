@@ -1,4 +1,11 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ANY_AUTHENTICATED_KEY, IS_PUBLIC_KEY, PERMISSIONS_KEY } from '../auth.constants';
 import type { AuthenticatedRequest } from '../interfaces/authenticated-user.interface';
@@ -26,7 +33,9 @@ export class PermissionsGuard implements CanActivate {
     }
     if (this.reflector.getAllAndOverride<boolean>(ANY_AUTHENTICATED_KEY, targets)) return true;
 
-    this.logger.warn(`Route ${ctx.getClass().name}.${ctx.getHandler().name} has no authorization metadata; denied`);
+    this.logger.warn(
+      `Route ${ctx.getClass().name}.${ctx.getHandler().name} has no authorization metadata; denied`,
+    );
     throw new ForbiddenException('Insufficient permissions');
   }
 }

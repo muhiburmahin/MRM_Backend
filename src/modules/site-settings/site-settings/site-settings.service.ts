@@ -37,6 +37,137 @@ export class SiteSettingsService {
     return { data: settings };
   }
 
+  async getRedirects() {
+    const redirects = await this.prisma.redirect.findMany({
+      where: { isActive: true },
+      select: {
+        fromPath: true,
+        toPath: true,
+        statusCode: true,
+      },
+    });
+    return { data: redirects };
+  }
+
+  async getSitemapData() {
+    const [pages, products, services, caseStudies, posts, jobs] = await Promise.all([
+      this.prisma.pageTranslation.findMany({
+        where: { status: 'PUBLISHED' },
+        select: {
+          path: true,
+          locale: true,
+          updatedAt: true,
+        },
+      }),
+      this.prisma.productTranslation.findMany({
+        where: { status: 'PUBLISHED' },
+        select: {
+          locale: true,
+          product: { select: { slug: true, updatedAt: true } },
+        },
+      }),
+      this.prisma.serviceTranslation.findMany({
+        where: { status: 'PUBLISHED' },
+        select: {
+          locale: true,
+          service: { select: { slug: true, updatedAt: true } },
+        },
+      }),
+      this.prisma.caseStudyTranslation.findMany({
+        where: { status: 'PUBLISHED' },
+        select: {
+          locale: true,
+          caseStudy: { select: { slug: true, publishedAt: true } },
+        },
+      }),
+      this.prisma.postTranslation.findMany({
+        where: { status: 'PUBLISHED' },
+        select: {
+          slug: true,
+          locale: true,
+          publishedAt: true,
+        },
+      }),
+      this.prisma.jobPosting.findMany({
+        where: { isOpen: true },
+        select: {
+          slug: true,
+          createdAt: true,
+          translations: { select: { locale: true } },
+        },
+      }),
+    ]);
+
+    const items: Array<{
+      path: string;
+      locale: string;
+      lastModified?: Date | null;
+      type: 'page' | 'product' | 'service' | 'case-study' | 'blog' | 'career';
+    }> = [];
+
+    for (const p of pages) {
+      items.push({
+        path: p.path,
+        locale: p.locale,
+        lastModified: p.updatedAt,
+        type: 'page',
+      });
+    }
+
+    for (const prod of products) {
+      items.push({
+        path: `/products/${prod.product.slug}`,
+        locale: prod.locale,
+        lastModified: prod.product.updatedAt,
+        type: 'product',
+      });
+    }
+
+    for (const s of services) {
+      items.push({
+        path: `/services/${s.service.slug}`,
+        locale: s.locale,
+        lastModified: s.service.updatedAt,
+        type: 'service',
+      });
+    }
+
+    for (const cs of caseStudies) {
+      items.push({
+        path: `/case-studies/${cs.caseStudy.slug}`,
+        locale: cs.locale,
+        lastModified: cs.caseStudy.publishedAt,
+        type: 'case-study',
+      });
+    }
+
+    for (const post of posts) {
+      items.push({
+        path: `/blog/${post.slug}`,
+        locale: post.locale,
+        lastModified: post.publishedAt,
+        type: 'blog',
+      });
+    }
+
+    for (const j of jobs) {
+      for (const t of j.translations) {
+        items.push({
+          path: `/careers/${j.slug}`,
+          locale: t.locale,
+          lastModified: j.createdAt,
+          type: 'career',
+        });
+      }
+    }
+
+    return {
+      data: items,
+      total: items.length,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
   async listAdmin() {
     return this.prisma.siteSetting.findMany({ orderBy: [{ group: 'asc' }, { key: 'asc' }] });
   }

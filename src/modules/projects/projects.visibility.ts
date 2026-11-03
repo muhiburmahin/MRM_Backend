@@ -8,8 +8,12 @@ export interface VisibilityInput {
 }
 
 export type Blocker =
-  | 'NOT_VERIFIED' | 'EVIDENCE_NOTE_MISSING' | 'PUBLISH_DATE_MISSING' | 'PUBLISH_DATE_IN_FUTURE'
-  | 'CLIENT_APPROVAL_MISSING' | 'NO_PUBLISHED_TRANSLATION';
+  | 'NOT_VERIFIED'
+  | 'EVIDENCE_NOTE_MISSING'
+  | 'PUBLISH_DATE_MISSING'
+  | 'PUBLISH_DATE_IN_FUTURE'
+  | 'CLIENT_APPROVAL_MISSING'
+  | 'NO_PUBLISHED_TRANSLATION';
 
 /**
  * Mirrors the public query in ProjectsService.publicWhere(). Used to tell admins WHY a case study
@@ -22,7 +26,32 @@ export function visibility(cs: VisibilityInput, now: Date = new Date()) {
   if (!cs.publishedAt) blockers.push('PUBLISH_DATE_MISSING');
   else if (cs.publishedAt > now) blockers.push('PUBLISH_DATE_IN_FUTURE');
   if (cs.clientId && !cs.clientApprovedAt) blockers.push('CLIENT_APPROVAL_MISSING');
-  const published = cs.translations.filter((t) => t.status === 'PUBLISHED').map((t) => t.locale).sort();
+  const published = cs.translations
+    .filter((t) => t.status === 'PUBLISHED')
+    .map((t) => t.locale)
+    .sort();
   if (!published.length) blockers.push('NO_PUBLISHED_TRANSLATION');
-  return { isPublic: blockers.length === 0, locales: blockers.length === 0 ? published : [], blockers };
+  return {
+    isPublic: blockers.length === 0,
+    locales: blockers.length === 0 ? published : [],
+    blockers,
+  };
+}
+
+/**
+ * Strips private repository links for public responses unless explicitly marked as public.
+ */
+export function sanitizePublicProjectRepoLinks<
+  T extends {
+    frontendRepoUrl?: string | null;
+    backendRepoUrl?: string | null;
+    showFrontendRepo?: boolean;
+    showBackendRepo?: boolean;
+  },
+>(project: T) {
+  return {
+    ...project,
+    frontendRepoUrl: project.showFrontendRepo ? project.frontendRepoUrl : null,
+    backendRepoUrl: project.showBackendRepo ? project.backendRepoUrl : null,
+  };
 }

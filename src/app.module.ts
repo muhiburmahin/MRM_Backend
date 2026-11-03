@@ -12,6 +12,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { AdminModule } from './admin/admin.module';
 import { BlogModule } from './modules/blog/blog/blog.module';
+import { CareersModule } from './modules/careers/careers.module';
 import { CompanyModule } from './modules/company/company/company.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { FaqsModule } from './modules/faqs/faqs/faqs.module';
@@ -85,6 +86,7 @@ const SAFE_REQUEST_ID = /^[\w-]{8,64}$/; // reject anything that could pollute l
     AuthModule,
     AdminModule,
     BlogModule,
+    CareersModule,
     CompanyModule,
     ContactModule,
     FaqsModule,

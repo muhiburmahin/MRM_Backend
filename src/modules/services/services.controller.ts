@@ -1,7 +1,17 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public } from '../../auth/decorators/auth.decorators';
-import { QueryServicesDto, ServiceLocaleQueryDto, ServiceSlugParamDto } from './dto/query-services.dto';
+import {
+  QueryServicesDto,
+  ServiceLocaleQueryDto,
+  ServiceSlugParamDto,
+} from './dto/query-services.dto';
 import { PublicServiceDetail, PublicServiceListResponse } from './dto/service-response.dto';
 import { ServicesService } from './services.service';
 

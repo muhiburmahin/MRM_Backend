@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, Permissions } from '../../../auth/decorators/auth.decorators';
 import type { AuthenticatedUser } from '../../../auth/interfaces/authenticated-user.interface';
@@ -34,7 +45,11 @@ export class AdminFaqsController {
 
   @Patch(':id')
   @Permissions('content:write')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFaqDto, @CurrentUser() actor: AuthenticatedUser) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateFaqDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
     return this.faqs.update(id, dto, actor);
   }
 

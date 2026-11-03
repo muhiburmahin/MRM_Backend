@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { ContentStatus, Prisma } from '@prisma/client';
 import type { Post, PostTranslation } from '@prisma/client';
@@ -34,42 +40,77 @@ export class BlogService {
     const [posts, total] = await this.prisma.$transaction([
       this.prisma.post.findMany({
         where,
-        include: { translations: { where: { locale: { in: locales }, status: ContentStatus.PUBLISHED, publishedAt: { lte: new Date() } } } },
+        include: {
+          translations: {
+            where: {
+              locale: { in: locales },
+              status: ContentStatus.PUBLISHED,
+              publishedAt: { lte: new Date() },
+            },
+          },
+        },
         orderBy: { [query.sortBy]: query.order },
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
       this.prisma.post.count({ where }),
     ]);
-    return this.result(posts.map((post) => this.publicPost(post, locales, undefined, false)), total, query);
+    return this.result(
+      posts.map((post) => this.publicPost(post, locales, undefined, false)),
+      total,
+      query,
+    );
   }
 
   async findPublicBySlug(slug: string, locale = 'en') {
     const locales = await this.publicLocales(locale);
     const now = new Date();
     const translations = await this.prisma.postTranslation.findMany({
-      where: { slug, locale: { in: locales }, status: ContentStatus.PUBLISHED, publishedAt: { lte: now } },
+      where: {
+        slug,
+        locale: { in: locales },
+        status: ContentStatus.PUBLISHED,
+        publishedAt: { lte: now },
+      },
       include: { post: true },
     });
-    const translation = locales.map((localeCode) => translations.find((item) => item.locale === localeCode)).find(Boolean);
+    const translation = locales
+      .map((localeCode) => translations.find((item) => item.locale === localeCode))
+      .find(Boolean);
     if (!translation) throw new NotFoundException('Post not found');
-    return this.publicPost({ ...translation.post, translations: [translation] }, locales, translation);
+    return this.publicPost(
+      { ...translation.post, translations: [translation] },
+      locales,
+      translation,
+    );
   }
 
   async listAdmin(query: AdminQueryBlogDto) {
     const where: Prisma.PostWhereInput = {
       AND: [
-        ...(query.search ? [{
-          translations: { some: { OR: [
-            { title: { contains: query.search, mode: 'insensitive' as const } },
-            { excerpt: { contains: query.search, mode: 'insensitive' as const } },
-          ] } },
-        }] : []),
-        ...(query.isPublished !== undefined ? [{
-          translations: query.isPublished
-            ? { some: { status: ContentStatus.PUBLISHED } }
-            : { none: { status: ContentStatus.PUBLISHED } },
-        }] : []),
+        ...(query.search
+          ? [
+              {
+                translations: {
+                  some: {
+                    OR: [
+                      { title: { contains: query.search, mode: 'insensitive' as const } },
+                      { excerpt: { contains: query.search, mode: 'insensitive' as const } },
+                    ],
+                  },
+                },
+              },
+            ]
+          : []),
+        ...(query.isPublished !== undefined
+          ? [
+              {
+                translations: query.isPublished
+                  ? { some: { status: ContentStatus.PUBLISHED } }
+                  : { none: { status: ContentStatus.PUBLISHED } },
+              },
+            ]
+          : []),
       ],
     };
     const [posts, total] = await this.prisma.$transaction([
@@ -82,7 +123,11 @@ export class BlogService {
       }),
       this.prisma.post.count({ where }),
     ]);
-    return this.result(posts.map((post) => this.toAdmin(post)), total, query);
+    return this.result(
+      posts.map((post) => this.toAdmin(post)),
+      total,
+      query,
+    );
   }
 
   async findOneAdmin(id: string) {
@@ -104,10 +149,12 @@ export class BlogService {
           coverId: dto.coverId,
           readingMinutes: dto.readingMinutes,
           isFeatured: dto.isFeatured ?? false,
-          translations: { create: translations.map(({ locale, ...data }) => ({
-            ...data,
-            language: { connect: { code: locale } },
-          })) },
+          translations: {
+            create: translations.map(({ locale, ...data }) => ({
+              ...data,
+              language: { connect: { code: locale } },
+            })),
+          },
           tags: { create: dto.tagIds?.map((id) => ({ tag: { connect: { id } } })) },
         },
         include: { translations: true, tags: { include: { tag: true } } },
@@ -120,9 +167,10 @@ export class BlogService {
 
   async update(id: string, dto: UpdateBlogDto, actor: AuthenticatedUser) {
     const existing = await this.findOneAdmin(id);
-    const translations = dto.translations === undefined
-      ? undefined
-      : await this.translationsData(dto.translations, actor, existing.translations);
+    const translations =
+      dto.translations === undefined
+        ? undefined
+        : await this.translationsData(dto.translations, actor, existing.translations);
     try {
       return await this.prisma.$transaction(async (tx) => {
         if (translations) {
@@ -180,8 +228,15 @@ export class BlogService {
       where: { code: { in: rows.map(({ locale }) => locale) }, isEnabled: true },
       select: { code: true },
     });
-    if (locales.length !== rows.length) throw new BadRequestException('Every translation locale must be enabled');
-    return rows.map((row) => this.translationData(row, actor, existingRows?.find((item) => item.locale === row.locale)));
+    if (locales.length !== rows.length)
+      throw new BadRequestException('Every translation locale must be enabled');
+    return rows.map((row) =>
+      this.translationData(
+        row,
+        actor,
+        existingRows?.find((item) => item.locale === row.locale),
+      ),
+    );
   }
 
   private translationData(
@@ -200,7 +255,8 @@ export class BlogService {
       excerpt: row.excerpt,
       body: row.body,
       status,
-      publishedAt: status === ContentStatus.PUBLISHED ? existing?.publishedAt ?? new Date() : null,
+      publishedAt:
+        status === ContentStatus.PUBLISHED ? (existing?.publishedAt ?? new Date()) : null,
       ogImageId: row.ogImageId,
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
@@ -221,12 +277,18 @@ export class BlogService {
   }
 
   private publicPost(
-    post: Pick<Post, 'id' | 'key' | 'readingMinutes' | 'isFeatured'> & { translations: PostTranslation[] },
+    post: Pick<Post, 'id' | 'key' | 'readingMinutes' | 'isFeatured'> & {
+      translations: PostTranslation[];
+    },
     locales: string[],
     selected?: PostTranslation,
     includeBody = true,
   ) {
-    const translation = selected ?? locales.map((locale) => post.translations.find((item) => item.locale === locale)).find(Boolean);
+    const translation =
+      selected ??
+      locales
+        .map((locale) => post.translations.find((item) => item.locale === locale))
+        .find(Boolean);
     if (!translation) throw new NotFoundException('Post not found');
     return {
       id: post.id,
@@ -240,7 +302,11 @@ export class BlogService {
     };
   }
 
-  private toAdmin(post: Prisma.PostGetPayload<{ include: { translations: true; tags: { include: { tag: true } } } }>) {
+  private toAdmin(
+    post: Prisma.PostGetPayload<{
+      include: { translations: true; tags: { include: { tag: true } } };
+    }>,
+  ) {
     return {
       id: post.id,
       key: post.key,
@@ -258,15 +324,22 @@ export class BlogService {
   private result<T>(items: T[], total: number, query: QueryBlogDto) {
     return {
       data: items,
-      meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.ceil(total / query.limit),
+      },
     };
   }
 
   private handleDbError(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') throw new ConflictException('A post translation with this locale and slug already exists');
+      if (error.code === 'P2002')
+        throw new ConflictException('A post translation with this locale and slug already exists');
       if (error.code === 'P2025') throw new NotFoundException('Post not found');
-      if (error.code === 'P2003') throw new BadRequestException('A referenced category or asset does not exist');
+      if (error.code === 'P2003')
+        throw new BadRequestException('A referenced category or asset does not exist');
     }
     throw error;
   }

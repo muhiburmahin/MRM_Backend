@@ -21,7 +21,14 @@ export function MaxJsonSize(maxChars: number, options?: ValidationOptions) {
     });
 }
 
-export const Trim = () => Transform(({ value }) => (typeof value === 'string' ? value.trim() : value));
+export const Trim = () =>
+  Transform(({ value }) => (typeof value === 'string' ? value.trim() : value));
 
 export const ToBoolean = () =>
-  Transform(({ value }) => (value === 'true' || value === true ? true : value === 'false' || value === false ? false : value));
+  Transform(({ value }) =>
+    value === 'true' || value === true
+      ? true
+      : value === 'false' || value === false
+        ? false
+        : value,
+  );

@@ -1,4 +1,11 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ALLOW_PASSWORD_CHANGE_KEY, IS_PUBLIC_KEY } from '../auth.constants';
 import { AuthConfig, authConfig } from '../auth.config';
@@ -28,8 +35,14 @@ export class AuthGuard implements CanActivate {
 
     req.user = user;
 
-    if (user.mustChangePassword && !this.reflector.getAllAndOverride<boolean>(ALLOW_PASSWORD_CHANGE_KEY, targets)) {
-      throw new ForbiddenException({ message: 'Password change required', code: 'PASSWORD_CHANGE_REQUIRED' });
+    if (
+      user.mustChangePassword &&
+      !this.reflector.getAllAndOverride<boolean>(ALLOW_PASSWORD_CHANGE_KEY, targets)
+    ) {
+      throw new ForbiddenException({
+        message: 'Password change required',
+        code: 'PASSWORD_CHANGE_REQUIRED',
+      });
     }
     return true;
   }

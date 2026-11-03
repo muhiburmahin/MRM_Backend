@@ -12,7 +12,7 @@
     "test": "test"
   },
   "scripts": {
-    "build": "nest build",
+    "build": "prisma generate && nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
@@ -21,6 +21,7 @@
     "lint:fix": "eslint \"{src,test,prisma}/**/*.ts\" --fix",
     "format": "prettier --write \"{src,test,prisma}/**/*.ts\"",
     "format:check": "prettier --check \"{src,test,prisma}/**/*.ts\"",
+    "pretest": "prisma generate",
     "test": "jest",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",

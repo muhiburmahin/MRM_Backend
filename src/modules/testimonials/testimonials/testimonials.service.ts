@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Testimonial } from '@prisma/client';
 import type { AuthenticatedUser } from '../../../auth/interfaces/authenticated-user.interface';
@@ -27,13 +32,20 @@ export class TestimonialsService {
     });
     const visible = rows
       .map((testimonial) => this.toPublic(testimonial, locales))
-      .filter((testimonial): testimonial is NonNullable<typeof testimonial> => Boolean(testimonial));
+      .filter((testimonial): testimonial is NonNullable<typeof testimonial> =>
+        Boolean(testimonial),
+      );
     const start = (query.page - 1) * query.limit;
     const items = visible.slice(start, start + query.limit);
     const total = visible.length;
     return {
       data: items,
-      meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.ceil(total / query.limit),
+      },
     };
   }
 
@@ -69,7 +81,12 @@ export class TestimonialsService {
     ]);
     return {
       data: items.map((testimonial) => this.toAdmin(testimonial)),
-      meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.ceil(total / query.limit),
+      },
     };
   }
 
@@ -105,7 +122,11 @@ export class TestimonialsService {
   async update(id: string, dto: UpdateTestimonialDto, actor: AuthenticatedUser) {
     const existing = await this.findOneAdmin(id);
     this.assertPublishAllowed(dto, actor, existing);
-    const contentChanged = dto.quote !== undefined || dto.authorName !== undefined || dto.authorRole !== undefined || dto.clientId !== undefined;
+    const contentChanged =
+      dto.quote !== undefined ||
+      dto.authorName !== undefined ||
+      dto.authorRole !== undefined ||
+      dto.clientId !== undefined;
     if (existing.showOnSite && contentChanged && !actor.permissions.includes(PUBLISH_PERMISSION)) {
       throw new ForbiddenException('Changing a public testimonial requires content:publish');
     }
@@ -120,7 +141,12 @@ export class TestimonialsService {
           quote,
           isVerified: dto.isVerified,
           evidenceNote: dto.evidenceNote,
-          consentAt: dto.consentAt === undefined ? undefined : dto.consentAt === null ? null : new Date(dto.consentAt),
+          consentAt:
+            dto.consentAt === undefined
+              ? undefined
+              : dto.consentAt === null
+                ? null
+                : new Date(dto.consentAt),
           showOnSite: dto.showOnSite,
           sortOrder: dto.sortOrder,
         },
@@ -146,8 +172,13 @@ export class TestimonialsService {
     actor: AuthenticatedUser,
     existing?: Awaited<ReturnType<TestimonialsService['findOneAdmin']>>,
   ) {
-    if ((dto.isVerified === true || dto.showOnSite === true) && !actor.permissions.includes(PUBLISH_PERMISSION)) {
-      throw new ForbiddenException('Verifying or publishing a testimonial requires content:publish');
+    if (
+      (dto.isVerified === true || dto.showOnSite === true) &&
+      !actor.permissions.includes(PUBLISH_PERMISSION)
+    ) {
+      throw new ForbiddenException(
+        'Verifying or publishing a testimonial requires content:publish',
+      );
     }
     const verified = dto.isVerified ?? existing?.isVerified ?? false;
     const showOnSite = dto.showOnSite ?? existing?.showOnSite ?? false;
@@ -157,20 +188,31 @@ export class TestimonialsService {
       throw new BadRequestException('Written evidence is required to verify a testimonial');
     }
     if (showOnSite && (!verified || !evidenceNote?.trim() || !consentAt)) {
-      throw new BadRequestException('A testimonial must be verified, evidenced and consented before it can be public');
+      throw new BadRequestException(
+        'A testimonial must be verified, evidenced and consented before it can be public',
+      );
     }
   }
 
   private async validateQuote(quote: Record<string, string>): Promise<Prisma.InputJsonValue> {
     const entries = Object.entries(quote);
-    if (!entries.length || entries.some(([locale, text]) => !locale || typeof text !== 'string' || !text.trim() || text.length > 2000)) {
-      throw new BadRequestException('Provide a non-empty quote of at most 2000 characters for each locale');
+    if (
+      !entries.length ||
+      entries.some(
+        ([locale, text]) =>
+          !locale || typeof text !== 'string' || !text.trim() || text.length > 2000,
+      )
+    ) {
+      throw new BadRequestException(
+        'Provide a non-empty quote of at most 2000 characters for each locale',
+      );
     }
     const languages = await this.prisma.language.findMany({
       where: { code: { in: entries.map(([locale]) => locale) }, isEnabled: true },
       select: { code: true },
     });
-    if (languages.length !== entries.length) throw new BadRequestException('Every testimonial locale must be enabled');
+    if (languages.length !== entries.length)
+      throw new BadRequestException('Every testimonial locale must be enabled');
     return quote as Prisma.InputJsonValue;
   }
 
@@ -179,17 +221,31 @@ export class TestimonialsService {
       where: { isEnabled: true },
       select: { code: true, isDefault: true },
     });
-    if (!languages.some(({ code }) => code === locale)) throw new BadRequestException('Locale is not enabled');
+    if (!languages.some(({ code }) => code === locale))
+      throw new BadRequestException('Locale is not enabled');
     const fallback = languages.find(({ isDefault }) => isDefault)?.code;
     return [...new Set([locale, ...(fallback ? [fallback] : [])])];
   }
 
   private toPublic(testimonial: Testimonial, locales: string[]) {
-    if (!testimonial.isVerified || !testimonial.showOnSite || !testimonial.evidenceNote?.trim() || !testimonial.consentAt) return undefined;
+    if (
+      !testimonial.isVerified ||
+      !testimonial.showOnSite ||
+      !testimonial.evidenceNote?.trim() ||
+      !testimonial.consentAt
+    )
+      return undefined;
     const quote = testimonial.quote as Record<string, string>;
-    const text = locales.map((locale) => quote?.[locale]).find((value) => typeof value === 'string' && value.trim());
+    const text = locales
+      .map((locale) => quote?.[locale])
+      .find((value) => typeof value === 'string' && value.trim());
     if (!text) return undefined;
-    return { id: testimonial.id, authorName: testimonial.authorName, authorRole: testimonial.authorRole, quote: text };
+    return {
+      id: testimonial.id,
+      authorName: testimonial.authorName,
+      authorRole: testimonial.authorRole,
+      quote: text,
+    };
   }
 
   private toAdmin(testimonial: Testimonial) {
@@ -210,7 +266,8 @@ export class TestimonialsService {
   private handleDbError(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') throw new NotFoundException('Testimonial not found');
-      if (error.code === 'P2003') throw new BadRequestException('The selected client does not exist');
+      if (error.code === 'P2003')
+        throw new BadRequestException('The selected client does not exist');
     }
     throw error;
   }

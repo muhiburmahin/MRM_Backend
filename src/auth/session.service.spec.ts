@@ -3,14 +3,38 @@ import { testCfg } from './test-helpers';
 import { hashToken } from './utils/token.util';
 
 const sessionRow = (over: Record<string, unknown> = {}) => ({
-  id: 's1', revokedAt: null, expiresAt: new Date(Date.now() + 60_000),
-  user: { id: 'u1', email: 'a@b.com', name: 'A', uiLocale: 'en', isActive: true, deletedAt: null, mustChangePassword: false, twoFactorEnabled: false,
-    passwordHash: 'SECRET', role: { id: 'r', key: 'editor', name: 'Editor', permissions: [{ permission: { key: 'page:read' } }] } },
+  id: 's1',
+  revokedAt: null,
+  expiresAt: new Date(Date.now() + 60_000),
+  user: {
+    id: 'u1',
+    email: 'a@b.com',
+    name: 'A',
+    uiLocale: 'en',
+    isActive: true,
+    deletedAt: null,
+    mustChangePassword: false,
+    twoFactorEnabled: false,
+    passwordHash: 'SECRET',
+    role: {
+      id: 'r',
+      key: 'editor',
+      name: 'Editor',
+      permissions: [{ permission: { key: 'page:read' } }],
+    },
+  },
   ...over,
 });
 
 describe('SessionService', () => {
-  const prisma = { session: { create: jest.fn(), findUnique: jest.fn(), updateMany: jest.fn(), deleteMany: jest.fn() } };
+  const prisma = {
+    session: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+  };
   const svc = new SessionService(prisma as never, testCfg);
   beforeEach(() => jest.clearAllMocks());
 
@@ -43,6 +67,9 @@ describe('SessionService', () => {
 
   it('revokeAllForUser keeps the excepted session', async () => {
     await svc.revokeAllForUser('u1', 's1');
-    expect(prisma.session.updateMany.mock.calls[0][0].where).toMatchObject({ userId: 'u1', id: { not: 's1' } });
+    expect(prisma.session.updateMany.mock.calls[0][0].where).toMatchObject({
+      userId: 'u1',
+      id: { not: 's1' },
+    });
   });
 });

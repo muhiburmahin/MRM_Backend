@@ -28,15 +28,21 @@ export class LoginAttemptService {
     const from: Date = lastSuccess && lastSuccess.createdAt > since ? lastSuccess.createdAt : since;
 
     const [byEmail, byIp] = await Promise.all([
-      this.prisma.loginAttempt.count({ where: { email, success: false, createdAt: { gte: from } } }),
+      this.prisma.loginAttempt.count({
+        where: { email, success: false, createdAt: { gte: from } },
+      }),
       ipHash
-        ? this.prisma.loginAttempt.count({ where: { ipHash, success: false, createdAt: { gte: since } } })
+        ? this.prisma.loginAttempt.count({
+            where: { ipHash, success: false, createdAt: { gte: since } },
+          })
         : Promise.resolve(0),
     ]);
     return byEmail >= this.cfg.maxFailedAttempts || byIp >= this.cfg.maxFailedAttempts * 5;
   }
 
   async record(email: string, ipHash: string | undefined, success: boolean): Promise<void> {
-    await this.prisma.loginAttempt.create({ data: { email, ipHash: ipHash ?? 'unknown', success } });
+    await this.prisma.loginAttempt.create({
+      data: { email, ipHash: ipHash ?? 'unknown', success },
+    });
   }
 }

@@ -2,6 +2,8 @@ import { VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 import helmet from 'helmet';
 import { AppConfigService } from './config/app-config.service';
 import { API_DEFAULT_VERSION, API_PREFIX } from './common/constants/api.constants';
@@ -49,6 +51,14 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
   app.setGlobalPrefix(API_PREFIX);
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: API_DEFAULT_VERSION });
   app.useGlobalPipes(createValidationPipe());
+
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  if (typeof app.useStaticAssets === 'function') {
+    app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
+  }
 }
 
 export function setupSwagger(app: NestExpressApplication, config: AppConfigService): void {

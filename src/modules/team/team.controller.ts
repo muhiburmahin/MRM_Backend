@@ -1,5 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public } from '../../auth/decorators/auth.decorators';
 import { QueryTeamDto, TeamLocaleQueryDto, TeamSlugParamDto } from './dto/query-team.dto';
 import { PublicTeamDetail, PublicTeamListResponse } from './dto/team-response.dto';

@@ -877,10 +877,34 @@ export class FakePrisma {
   readonly technology = { findFirst: async () => null };
   readonly trustBadge = { findFirst: async () => null };
   readonly theme = { findFirst: async () => null };
+  readonly redirect = {
+    findMany: async () => [],
+    findFirst: async () => null,
+    create: async ({ data }: { data: Data }) => data,
+  };
   readonly user = { findFirst: async () => null };
+  readonly passwordReset = {
+    findUnique: async () => null,
+    deleteMany: async () => ({ count: 0 }),
+    create: async ({ data }: { data: Data }) => data,
+    update: async ({ data }: { data: Data }) => data,
+  };
   readonly fontAsset = { findFirst: async () => null };
   readonly productScreenshot = { findFirst: async () => null };
   readonly caseStudyMedia = { findFirst: async () => null };
+  readonly jobPosting = {
+    findFirst: async () => null,
+    findUnique: async () => null,
+    findMany: async () => [],
+    count: async () => 0,
+    create: async ({ data }: { data: Data }) => data,
+    update: async ({ data }: { data: Data }) => data,
+    delete: async () => ({}),
+  };
+  readonly jobPostingTranslation = {
+    create: async ({ data }: { data: Data }) => data,
+    update: async ({ data }: { data: Data }) => data,
+  };
 
   async $transaction<T>(
     operation: Promise<unknown>[] | ((tx: FakePrisma) => Promise<T>),

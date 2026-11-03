@@ -14,7 +14,9 @@ export class AuthUserResponse {
   @ApiProperty() uiLocale!: string;
   @ApiProperty({ type: RoleSummary }) role!: RoleSummary;
   @ApiProperty({ type: [String] }) permissions!: string[];
-  @ApiProperty({ description: 'If true, only /auth/me, /auth/logout and /auth/change-password are allowed.' })
+  @ApiProperty({
+    description: 'If true, only /auth/me, /auth/logout and /auth/change-password are allowed.',
+  })
   mustChangePassword!: boolean;
 
   static from(u: AuthenticatedUser): AuthUserResponse {

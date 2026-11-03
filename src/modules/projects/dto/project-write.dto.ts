@@ -188,6 +188,57 @@ class ProjectFieldsDto {
   @Type(() => Date)
   @IsDate()
   publishedAt?: Date | null;
+
+  @ApiPropertyOptional({ example: 'COMPLETED', default: 'COMPLETED' })
+  @IsOptional()
+  @IsString()
+  projectWorkStatus?: string;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  demoVideoUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  frontendRepoUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  backendRepoUrl?: string | null;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showFrontendRepo?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  showBackendRepo?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Frontend tech stack summary (e.g. ["Next.js", "TypeScript"])',
+  })
+  @IsOptional()
+  frontendTechSummary?: unknown;
+
+  @ApiPropertyOptional({
+    description: 'Backend tech stack summary (e.g. ["NestJS", "PostgreSQL"])',
+  })
+  @IsOptional()
+  backendTechSummary?: unknown;
+
+  @ApiPropertyOptional({ description: 'Database and tools summary (e.g. ["Redis", "Docker"])' })
+  @IsOptional()
+  dbToolsSummary?: unknown;
 }
 
 export class CreateProjectDto extends ProjectFieldsDto {

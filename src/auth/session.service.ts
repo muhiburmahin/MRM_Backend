@@ -4,7 +4,9 @@ import { AuthConfig, authConfig } from './auth.config';
 import type { AuthenticatedUser, RequestMeta } from './interfaces/authenticated-user.interface';
 import { generateSessionToken, hashIp, hashToken } from './utils/token.util';
 
-interface PermissionRow { permission: { key: string } }
+interface PermissionRow {
+  permission: { key: string };
+}
 
 @Injectable()
 export class SessionService {
@@ -57,19 +59,28 @@ export class SessionService {
   }
 
   async revoke(sessionId: string): Promise<void> {
-    await this.prisma.session.updateMany({ where: { id: sessionId, revokedAt: null }, data: { revokedAt: new Date() } });
+    await this.prisma.session.updateMany({
+      where: { id: sessionId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
 
   async revokeAllForUser(userId: string, exceptSessionId?: string): Promise<void> {
     await this.prisma.session.updateMany({
-      where: { userId, revokedAt: null, ...(exceptSessionId ? { id: { not: exceptSessionId } } : {}) },
+      where: {
+        userId,
+        revokedAt: null,
+        ...(exceptSessionId ? { id: { not: exceptSessionId } } : {}),
+      },
       data: { revokedAt: new Date() },
     });
   }
 
   /** For a future scheduled job. */
   async purgeExpired(): Promise<number> {
-    const res = await this.prisma.session.deleteMany({ where: { expiresAt: { lt: new Date(Date.now() - 7 * 86_400_000) } } });
+    const res = await this.prisma.session.deleteMany({
+      where: { expiresAt: { lt: new Date(Date.now() - 7 * 86_400_000) } },
+    });
     return res.count;
   }
 }

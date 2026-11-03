@@ -8,8 +8,10 @@ import {
 import { randomBytes } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { MailService } from '../../common/mail/mail.service';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { CreateContactDto } from './dto/create-contact.dto';
+import { StartProjectDto } from './dto/start-project.dto';
 import { QueryContactDto } from './dto/query-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 
@@ -57,18 +59,23 @@ const prismaCode = (error: unknown): string | undefined =>
 export class ContactService {
   private readonly logger = new Logger(ContactService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   async create(dto: CreateContactDto) {
     if (dto.consentGiven !== true) {
       throw new BadRequestException('Consent to be contacted is required');
     }
+    const timestamp = new Date();
+    const datePart = timestamp.toISOString().slice(0, 10).replace(/-/g, '');
+    const ref = `LD-${datePart}-${randomBytes(6).toString('hex').toUpperCase()}`;
+
     try {
-      const timestamp = new Date();
-      const datePart = timestamp.toISOString().slice(0, 10).replace(/-/g, '');
       await this.prisma.lead.create({
         data: {
-          ref: `LD-${datePart}-${randomBytes(6).toString('hex').toUpperCase()}`,
+          ref,
           type: 'GENERAL',
           name: dto.name,
           email: dto.email,
@@ -84,7 +91,79 @@ export class ContactService {
         'Could not submit your message. Please try again later.',
       );
     }
+
+    // Trigger asynchronous, non-blocking email notifications
+    // Even if email delivery fails, the lead record remains preserved in the database.
+    await this.mail.notifyNewLead({
+      ref,
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      message: dto.message,
+      type: 'GENERAL',
+    });
+    await this.mail.sendCustomerConfirmation({
+      ref,
+      name: dto.name,
+      email: dto.email,
+    });
+
     return { message: 'Thank you for contacting us. We will get back to you soon.' };
+  }
+
+  async createProjectLead(dto: StartProjectDto) {
+    if (dto.consentGiven !== true) {
+      throw new BadRequestException('Consent to be contacted is required');
+    }
+    const timestamp = new Date();
+    const datePart = timestamp.toISOString().slice(0, 10).replace(/-/g, '');
+    const ref = `LD-${datePart}-${randomBytes(6).toString('hex').toUpperCase()}`;
+
+    try {
+      await this.prisma.lead.create({
+        data: {
+          ref,
+          type: 'PROJECT',
+          status: 'NEW',
+          name: dto.name,
+          email: dto.email,
+          phone: dto.phone ?? null,
+          company: dto.company ?? null,
+          message: dto.message,
+          payload: {
+            serviceInterested: dto.serviceInterested ?? null,
+            budgetRange: dto.budgetRange ?? null,
+            timeline: dto.timeline ?? null,
+          } as never,
+          consentAt: timestamp,
+        },
+      });
+    } catch {
+      this.logger.error('Failed to save project lead submission');
+      throw new InternalServerErrorException(
+        'Could not submit your project inquiry. Please try again later.',
+      );
+    }
+
+    await this.mail.notifyNewLead({
+      ref,
+      name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      message: dto.message,
+      type: 'PROJECT',
+    });
+    await this.mail.sendCustomerConfirmation({
+      ref,
+      name: dto.name,
+      email: dto.email,
+    });
+
+    return {
+      message:
+        'Thank you for your project inquiry. Our team will review your requirements and reach out shortly.',
+      ref,
+    };
   }
 
   async findAll(q: QueryContactDto) {

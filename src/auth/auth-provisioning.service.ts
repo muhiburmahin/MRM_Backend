@@ -6,18 +6,29 @@ import { PasswordService } from './password.service';
 @Injectable()
 export class AuthProvisioningService {
   private readonly logger = new Logger(AuthProvisioningService.name);
-  constructor(private readonly prisma: PrismaService, private readonly passwords: PasswordService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly passwords: PasswordService,
+  ) {}
 
-  async provisionOwner(input: { email: string; password: string; name?: string }): Promise<{ created: boolean; reason?: string }> {
+  async provisionOwner(input: {
+    email: string;
+    password: string;
+    name?: string;
+  }): Promise<{ created: boolean; reason?: string }> {
     const email = input.email.trim().toLowerCase();
 
     const existingUsers = await this.prisma.user.count({ where: { deletedAt: null } });
     if (existingUsers > 0) {
-      return { created: false, reason: 'A user already exists; first-owner provisioning is disabled.' };
+      return {
+        created: false,
+        reason: 'A user already exists; first-owner provisioning is disabled.',
+      };
     }
 
     const role = await this.prisma.role.findUnique({ where: { key: 'owner' } });
-    if (!role) throw new Error('Role "owner" not found. Run the database seed (roles/permissions) first.');
+    if (!role)
+      throw new Error('Role "owner" not found. Run the database seed (roles/permissions) first.');
 
     // Never promote or modify an existing account.
     if (await this.prisma.user.findUnique({ where: { email }, select: { id: true } })) {
@@ -37,8 +48,17 @@ export class AuthProvisioningService {
       },
       select: { id: true },
     });
-    await this.prisma.auditLog.create({ data: { actorId: null, action: 'user.owner_provisioned', entityType: 'user', entityId: user.id } });
-    this.logger.log(`Owner account created (${user.id}). Password change is required at first login.`);
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: null,
+        action: 'user.owner_provisioned',
+        entityType: 'user',
+        entityId: user.id,
+      },
+    });
+    this.logger.log(
+      `Owner account created (${user.id}). Password change is required at first login.`,
+    );
     return { created: true };
   }
 }

@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, Permissions } from '../../../auth/decorators/auth.decorators';
 import type { AuthenticatedUser } from '../../../auth/interfaces/authenticated-user.interface';
@@ -34,7 +45,11 @@ export class AdminTestimonialsController {
 
   @Patch(':id')
   @Permissions('content:write')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTestimonialDto, @CurrentUser() actor: AuthenticatedUser) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTestimonialDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
     return this.testimonials.update(id, dto, actor);
   }
 

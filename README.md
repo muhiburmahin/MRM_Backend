@@ -1,110 +1,132 @@
-<<<<<<< HEAD
-# MRM Infotech — Backend
+# MRM InfoTech — Corporate Website Backend
 
-NestJS **modular monolith** for the MRM Infotech corporate website: an admin-controlled content system
-(products, services, pages, brand/theme, team, projects, blog, leads, media, navigation, SEO) on **PostgreSQL + Prisma**.
-This is **not** a SaaS application. The public website and the admin UI are separate projects.
+NestJS 11 **modular monolith** for the MRM InfoTech corporate website and admin dashboard, powered by **PostgreSQL + Prisma ORM** with Argon2id password hashing, HttpOnly session cookies, granular RBAC, and fail-closed application security.
 
-> **Status: not production-ready.** The application registers authentication, core admin, health, and implemented
-> resource APIs, including page management. Theme/branding, navigation, binary media storage, and other CMS areas remain
-> incomplete; no database migration has been created or applied. See
-> [implementation status](docs/implementation-status.md) for verified capabilities and limitations.
+---
 
-## Prerequisites
+## 1. Prerequisites
 
-- Node.js 20+ (developed on 22) and npm
-- PostgreSQL 14+ — either installed locally or via the optional `docker-compose.yml` (needs Docker)
+- **Node.js**: `v20.x` or `v22.x` (`v22.x` recommended)
+- **Package Manager**: `npm` (lockfile version 3)
+- **Database**: PostgreSQL 16+ (local native service or containerized via Docker)
 
-## Setup
+---
 
+## 2. Quick Start & Developer Setup
+
+### Clone and Install
 ```bash
+git clone <repo-url>
+cd MRM_Backend
 npm ci
-cp .env.example .env            # replace placeholders. Never commit .env
-docker compose up -d db         # OPTIONAL local PostgreSQL (skip if you already have one)
-npm run prisma:validate         # validate the multi-file schema
-npm run prisma:generate         # generate the Prisma client (required after install and after schema changes)
-npm run prisma:migrate:dev -- --name init   # LOCAL empty database only. See docs/database-schema.md first
-npm run prisma:seed             # system records only; no admin user or demo business data
-npm run start:dev               # http://localhost:4000/api/v1/health
 ```
 
-Swagger UI: http://localhost:4000/docs (on by default in development, off in production unless `SWAGGER_ENABLED=true`).
-The seed command requires the schema migration to have been applied first. It creates `en`/`bn`, system permissions and roles,
-and the `header`, `footer-company`, and `footer-legal` navigation keys. It does not create an owner account.
+### Environment Configuration
+Copy `.env.example` to `.env` and fill in local development values:
+```bash
+cp .env.example .env
+```
+> [!IMPORTANT]
+> Never commit `.env` or place production secrets in `.env.example`.
 
-## Commands
+### Prisma Client Generation
+Prisma Client is automatically generated before tests (`pretest`) and before production builds (`build`). To generate it manually at any time without database access:
+```bash
+npm run prisma:generate
+```
 
-| Command | Purpose |
-|---|---|
-| `npm run start:dev` | Development server with reload |
-| `npm run build` / `npm run start:prod` | Production build / run `dist/main.js` |
-| `npm run typecheck` | TypeScript check (strict) |
-| `npm run lint` / `lint:fix` | ESLint |
-| `npm run format` / `npm run format:check` | Prettier |
-| `npm test` / `test:cov` | Unit tests |
-| `npm run test:e2e` | End-to-end tests (database mocked; no PostgreSQL needed) |
-| `npm run prisma:*` | validate, format, generate, seed, migrate:dev, migrate:deploy, migrate:status |
+---
 
-## Environment
+## 3. Database Workflows
 
-All variables are validated at startup (`src/config/env.validation.ts`); the app refuses to start with a clear message
-(values are never printed) if something required is missing or invalid. See `.env.example` for every variable and its meaning.
+### Command Categories
 
-Replace the angle-bracket placeholders in `DATABASE_URL` before using Prisma or starting the app. The optional Docker Compose
-credentials are local-development-only and must never be reused in production.
+| Command | Category | Live Database Required? | Safety Level |
+|---|---|---|---|
+| `npm run typecheck` | Quality | **No** | Safe |
+| `npm run lint` | Quality | **No** | Safe |
+| `npm run format:check` | Quality | **No** | Safe |
+| `npm test` | Testing | **No** (Unit mocks) | Safe |
+| `npm run test:e2e` | Testing | **No** (Uses FakePrisma) | Safe |
+| `npm run build` | Build | **No** (Compiles TS) | Safe |
+| `npm run prisma:generate` | Schema | **No** (Static generation) | Safe |
+| `npm run prisma:validate` | Schema | **No** (Validates multi-file schema) | Safe |
+| `npm run prisma:migrate:status`| Migration | **Yes** (Reads `_prisma_migrations`) | Safe (Read-only) |
+| `npm run prisma:migrate:deploy`| Migration | **Yes** (Applies pending migrations) | Safe for production |
+| `npm run prisma:seed` | Data | **Yes** (Populates system roles) | Safe |
+| `npm run prisma:migrate:dev` | Migration | **Yes** (Dev database only) | **NEVER RUN ON PRODUCTION** |
 
-Key variables: `DATABASE_URL` (required), `CORS_ORIGINS` (exact allow-list, empty = no cross-origin), `TRUST_PROXY` (number of proxies in front),
-`LOG_LEVEL`, `SWAGGER_ENABLED`, `THROTTLE_*`, `TZ=Asia/Dhaka`, and `APP_TIMEZONE=Asia/Dhaka`. Database timestamps use UTC;
-Dhaka time is for display and scheduling.
+> [!CAUTION]
+> Commands such as `prisma migrate reset` and `prisma db push` are strictly prohibited on production and staging environments as they cause irreversible data loss.
 
-## Production
+---
+
+## 4. Key Workflows & Features
+
+### 4.1 Authentication & Two-Factor Authentication (2FA)
+- **Password Security**: Argon2id hashing with automatic rehash detection.
+- **Session Security**: Server-side sessions with SHA-256 token hashing; delivered via `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
+- **Origin Guard**: Enforces origin checks against `AUTH_ALLOWED_ORIGINS` for non-idempotent state mutations.
+- **Two-Factor Authentication**:
+  - `POST /api/v1/auth/login`: Authenticates credentials. If 2FA is active, returns `{ requiresTwoFactor: true, twoFactorTicket }` without setting a session cookie.
+  - `POST /api/v1/auth/2fa/verify`: Verifies pending ticket with a 6-digit TOTP code or single-use recovery code, issuing a session cookie on success.
+  - `POST /api/v1/auth/2fa/generate`: Authenticated endpoint to generate new TOTP secret & `otpauth://` URI.
+  - `POST /api/v1/auth/2fa/enable`: Authenticated endpoint to verify TOTP code and activate 2FA, returning 8 single-use backup recovery codes.
+  - `POST /api/v1/auth/2fa/disable`: Authenticated endpoint to disable 2FA after password confirmation.
+
+### 4.2 Lead Notification & Mail Readiness
+- Incoming contact inquiries (`POST /api/v1/contact/inquiries`) and project leads (`POST /api/v1/contact/leads`) are persisted to PostgreSQL.
+- Asynchronous notifications are dispatched to company sales and customer confirmations are sent to the client.
+- **Fault-Tolerant Delivery**: If email transport is disabled or fails, the lead is safely retained in the database with zero data loss.
+- **Configuration** in `.env`:
+  ```ini
+  MAIL_ENABLED=true
+  MAIL_FROM="MRM InfoTech <no-reply@mrminfotech.com>"
+  MAIL_NOTIFY_RECIPIENT="leads@mrminfotech.com"
+  SMTP_HOST=smtp.sendgrid.net
+  SMTP_PORT=587
+  SMTP_SECURE=false
+  SMTP_USER=apikey
+  SMTP_PASSWORD=your_api_key
+  ```
+
+---
+
+## 5. Automated CI/CD Pipeline
+
+A GitHub Actions workflow is configured at [`.github/workflows/ci.yml`](.github/workflows/ci.yml) and executes on every push and pull request to `main`:
+
+1. Checkout repository & setup Node.js 22 with npm cache.
+2. Clean dependency installation (`npm ci`).
+3. Offline Prisma Client generation (`npm run prisma:generate`).
+4. Code formatting verification (`npm run format:check`).
+5. ESLint static analysis (`npm run lint`).
+6. TypeScript strict typechecking (`npm run typecheck`).
+7. Full unit test execution (`npm test -- --runInBand`).
+8. Integrated E2E test execution (`npm run test:e2e -- --runInBand`).
+9. Production build compilation (`npm run build`).
+
+---
+
+## 6. Production Deployment
 
 ```bash
+# 1. Clean install production dependencies
 npm ci
+
+# 2. Generate Prisma Client
 npm run prisma:generate
+
+# 3. Compile NestJS distribution
 npm run build
-npm run prisma:migrate:deploy   # applies reviewed migrations only; never reset, never db push
+
+# 4. Deploy reviewed migrations to PostgreSQL
+npm run prisma:migrate:deploy
+
+# 5. Start application in production mode
 NODE_ENV=production npm run start:prod
 ```
 
-Use `/api/v1/health` for liveness and `/api/v1/health/ready` (checks the database) for load-balancer readiness.
-Terminate HTTPS at your reverse proxy / platform and set `TRUST_PROXY` to the number of proxies in front.
-
-## Project layout
-
-See [docs/architecture.md](docs/architecture.md). Short version: `src/config`, `src/database`, `src/common`,
-`src/health`, and feature modules under `src/modules/<name>`.
-Prisma schema: one model per file in `prisma/schema/` ([docs/database-schema.md](docs/database-schema.md)).
-
-## Documentation
-
-- [docs/architecture.md](docs/architecture.md)
-- [docs/database-schema.md](docs/database-schema.md)
-- [docs/api-development-guide.md](docs/api-development-guide.md)
-- [docs/implementation-status.md](docs/implementation-status.md)
-- [docs/session-handoff.md](docs/session-handoff.md)
-
-## Troubleshooting
-
-| Symptom | Cause / fix |
-|---|---|
-| `Invalid environment configuration -> DATABASE_URL ...` | `.env` missing or incomplete. Copy `.env.example`. |
-| `Cannot find module '.prisma/client'` / `@prisma/client did not initialize yet` | Run `npm run prisma:generate`. |
-| `P1001: Can't reach database server` | PostgreSQL not running, wrong host/port, or wrong credentials in `DATABASE_URL`. `docker compose up -d db`. |
-| `Environment variable not found: DATABASE_URL` from a `prisma` command | Create `.env` (Prisma reads it through `prisma.config.ts`), or export the variable. For `prisma validate` any value works. |
-| App starts then exits on boot | The database must be reachable at startup (fail-fast by design). |
-| Port already in use | Change `PORT`. |
-| Browser blocked by CORS | Add the exact origin (scheme + host + port, no trailing slash) to `CORS_ORIGINS`. |
-| Rate limit (429) while testing | Raise `THROTTLE_LIMIT` locally. |
-| `prisma generate` fails to download engines (restricted network) | Allow `binaries.prisma.sh`, or set `PRISMA_ENGINES_MIRROR` to an internal mirror. |
-
-## First owner account
-
-The system seed intentionally creates no user and no known-password administrator. Authentication is implemented, and
-`AuthProvisioningService` provides one-time first-owner provisioning for an explicitly trusted operator call; there is no
-operator CLI or HTTP provisioning route. Provisioning refuses to proceed once any active user exists and stores an
-Argon2id password hash. Do not insert a plaintext password or enable a permanent default account.
-=======
-# MRM_Backend
->>>>>>> 02993decb4e1fafe06e36e50aff68cb12a6ad748
-# MRM_Backend
+### Health Probes
+- **Liveness Probe**: `GET /api/v1/health` (returns `200 OK` if process is responding)
+- **Readiness Probe**: `GET /api/v1/health/ready` (verifies live PostgreSQL connectivity)

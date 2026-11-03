@@ -37,10 +37,22 @@ export class PublicProjectListItem {
   @ApiPropertyOptional({ type: PublicImage, nullable: true }) cover!: PublicImage | null;
   @ApiProperty() publishedAt!: Date;
   @ApiProperty() sortOrder!: number;
+  @ApiProperty({ default: 'COMPLETED' }) projectWorkStatus!: string;
+  @ApiProperty({ default: false }) isFeatured!: boolean;
+  @ApiPropertyOptional({ nullable: true }) demoVideoUrl!: string | null;
+  @ApiPropertyOptional({ nullable: true }) frontendRepoUrl!: string | null;
+  @ApiPropertyOptional({ nullable: true }) backendRepoUrl!: string | null;
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true, nullable: true })
+  frontendTechSummary!: unknown;
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true, nullable: true })
+  backendTechSummary!: unknown;
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true, nullable: true })
+  dbToolsSummary!: unknown;
   @ApiPropertyOptional({ type: NamedRef, nullable: true }) service!: NamedRef | null;
   @ApiPropertyOptional({ type: NamedRef, nullable: true }) industry!: NamedRef | null;
   @ApiPropertyOptional({ type: NamedRef, nullable: true }) product!: NamedRef | null;
-  @ApiPropertyOptional({ nullable: true, description: 'Only when the client approved disclosure' }) clientName!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: 'Only when the client approved disclosure' })
+  clientName!: string | null;
 }
 
 export class PublicProjectDetail extends PublicProjectListItem {
@@ -63,8 +75,10 @@ export class PublicProjectListResponse {
 
 export class Visibility {
   @ApiProperty() isPublic!: boolean;
-  @ApiProperty({ type: [String], description: 'Locales visible on the website right now' }) locales!: string[];
-  @ApiProperty({ type: [String], description: 'Why it is not public yet (empty when public)' }) blockers!: string[];
+  @ApiProperty({ type: [String], description: 'Locales visible on the website right now' })
+  locales!: string[];
+  @ApiProperty({ type: [String], description: 'Why it is not public yet (empty when public)' })
+  blockers!: string[];
 }
 
 export class AdminProject {
@@ -81,7 +95,21 @@ export class AdminProject {
   @ApiPropertyOptional({ nullable: true }) clientApprovedAt!: Date | null;
   @ApiPropertyOptional({ nullable: true }) publishedAt!: Date | null;
   @ApiProperty() sortOrder!: number;
-  @ApiProperty({ type: 'array', items: { type: 'object', additionalProperties: true } }) translations!: unknown[];
+  @ApiProperty({ default: 'COMPLETED' }) projectWorkStatus!: string;
+  @ApiProperty({ default: false }) isFeatured!: boolean;
+  @ApiPropertyOptional({ nullable: true }) demoVideoUrl!: string | null;
+  @ApiPropertyOptional({ nullable: true }) frontendRepoUrl!: string | null;
+  @ApiPropertyOptional({ nullable: true }) backendRepoUrl!: string | null;
+  @ApiProperty({ default: false }) showFrontendRepo!: boolean;
+  @ApiProperty({ default: false }) showBackendRepo!: boolean;
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true, nullable: true })
+  frontendTechSummary!: unknown;
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true, nullable: true })
+  backendTechSummary!: unknown;
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true, nullable: true })
+  dbToolsSummary!: unknown;
+  @ApiProperty({ type: 'array', items: { type: 'object', additionalProperties: true } })
+  translations!: unknown[];
   @ApiProperty({ type: Visibility }) visibility!: Visibility;
 }
 

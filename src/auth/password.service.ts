@@ -45,8 +45,10 @@ export class PasswordService {
   /** Returns a list of human-readable problems (empty = OK). */
   validatePolicy(plain: string, ctx: { email?: string } = {}): string[] {
     const problems: string[] = [];
-    if (plain.length < PASSWORD_MIN_LENGTH) problems.push(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long`);
-    if (plain.length > PASSWORD_MAX_LENGTH) problems.push(`Password must be at most ${PASSWORD_MAX_LENGTH} characters long`);
+    if (plain.length < PASSWORD_MIN_LENGTH)
+      problems.push(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long`);
+    if (plain.length > PASSWORD_MAX_LENGTH)
+      problems.push(`Password must be at most ${PASSWORD_MAX_LENGTH} characters long`);
     if (/^(.)\1+$/.test(plain)) problems.push('Password must not be a single repeated character');
     const local = ctx.email?.split('@')[0]?.toLowerCase();
     if (local && local.length >= 4 && plain.toLowerCase().includes(local)) {

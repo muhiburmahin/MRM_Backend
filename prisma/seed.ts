@@ -174,6 +174,225 @@ async function seedSystemData(): Promise<void> {
     for (const key of ['header', 'footer-company', 'footer-legal']) {
       await tx.navMenu.upsert({ where: { key }, update: {}, create: { key } });
     }
+
+    // Seed MRM InfoTech Core Company Profile
+    await tx.siteSetting.upsert({
+      where: { key: 'company.profile' },
+      update: {
+        group: 'company',
+        isPublic: true,
+        value: {
+          name: 'MRM InfoTech',
+          legalName: 'MRM InfoTech Ltd.',
+          tagline: 'IDEAS • PRODUCTS • IMPACT',
+          email: 'contact@mrminfotech.com',
+          phone: '+8801700000000',
+          website: 'https://mrminfotech.com',
+          description:
+            'Leading software architecture and enterprise technology provider delivering scalable digital products and custom engineering solutions.',
+          headquarters: 'Dhaka, Bangladesh',
+          foundedYear: 2024,
+        },
+      },
+      create: {
+        key: 'company.profile',
+        group: 'company',
+        isPublic: true,
+        value: {
+          name: 'MRM InfoTech',
+          legalName: 'MRM InfoTech Ltd.',
+          tagline: 'IDEAS • PRODUCTS • IMPACT',
+          email: 'contact@mrminfotech.com',
+          phone: '+8801700000000',
+          website: 'https://mrminfotech.com',
+          description:
+            'Leading software architecture and enterprise technology provider delivering scalable digital products and custom engineering solutions.',
+          headquarters: 'Dhaka, Bangladesh',
+          foundedYear: 2024,
+        },
+      },
+    });
+
+    // Seed 3 Core Products
+    const products = [
+      {
+        slug: 'edumanage-bd',
+        stage: 'LIVE' as const,
+        isFeatured: true,
+        sortOrder: 1,
+        name: 'EduManage BD',
+        tagline: 'Comprehensive School & University ERP',
+        summary:
+          'Cloud-native educational management ecosystem designed for Bangladeshi schools, colleges, and universities.',
+      },
+      {
+        slug: 'medisheba-bd',
+        stage: 'LIVE' as const,
+        isFeatured: true,
+        sortOrder: 2,
+        name: 'MediSheba BD',
+        tagline: 'Integrated Clinical & Diagnostic Management',
+        summary:
+          'Secure healthcare management system connecting clinics, diagnostic centers, doctors, and patients.',
+      },
+      {
+        slug: 'multi-institution-platform',
+        stage: 'BETA' as const,
+        isFeatured: true,
+        sortOrder: 3,
+        name: 'Multi-Institution Platform',
+        tagline: 'Enterprise Multi-Tenant SaaS Engine',
+        summary:
+          'Scalable multi-tenant governance platform engineered for chain institutions, enterprises, and conglomerates.',
+      },
+    ];
+
+    for (const prod of products) {
+      const p = await tx.product.upsert({
+        where: { slug: prod.slug },
+        update: { stage: prod.stage, isFeatured: prod.isFeatured, sortOrder: prod.sortOrder },
+        create: {
+          slug: prod.slug,
+          stage: prod.stage,
+          isFeatured: prod.isFeatured,
+          sortOrder: prod.sortOrder,
+        },
+      });
+
+      await tx.productTranslation.upsert({
+        where: { productId_locale: { productId: p.id, locale: 'en' } },
+        update: {
+          name: prod.name,
+          tagline: prod.tagline,
+          summary: prod.summary,
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+        },
+        create: {
+          productId: p.id,
+          locale: 'en',
+          name: prod.name,
+          tagline: prod.tagline,
+          summary: prod.summary,
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+        },
+      });
+    }
+
+    // Seed 14 Core Client Services
+    const services = [
+      {
+        slug: 'custom-software-development',
+        name: 'Custom Software Development',
+        summary: 'Tailor-made software solutions designed to solve complex business problems.',
+        sortOrder: 1,
+      },
+      {
+        slug: 'web-application-development',
+        name: 'Web Application Development',
+        summary: 'High-performance, secure, and scalable web apps built with modern tech stacks.',
+        sortOrder: 2,
+      },
+      {
+        slug: 'mobile-app-development',
+        name: 'Mobile App Development',
+        summary: 'Native and cross-platform mobile apps for iOS and Android devices.',
+        sortOrder: 3,
+      },
+      {
+        slug: 'enterprise-erp-solutions',
+        name: 'Enterprise ERP Solutions',
+        summary: 'Modular, integrated ERP software streamlining organizational operations.',
+        sortOrder: 4,
+      },
+      {
+        slug: 'cloud-devops-infrastructure',
+        name: 'Cloud & DevOps Infrastructure',
+        summary: 'Resilient cloud architecture, CI/CD automation, and Kubernetes orchestration.',
+        sortOrder: 5,
+      },
+      {
+        slug: 'ai-machine-learning-solutions',
+        name: 'AI & Machine Learning Solutions',
+        summary: 'Intelligent automation, predictive models, and LLM integrations.',
+        sortOrder: 6,
+      },
+      {
+        slug: 'ui-ux-design',
+        name: 'UI/UX Design & Prototyping',
+        summary: 'User-centric product design, wireframing, and interactive digital interfaces.',
+        sortOrder: 7,
+      },
+      {
+        slug: 'cybersecurity-compliance',
+        name: 'Cybersecurity & Compliance',
+        summary: 'Vulnerability assessment, penetration testing, and security auditing.',
+        sortOrder: 8,
+      },
+      {
+        slug: 'database-architecture-migration',
+        name: 'Database Architecture & Migration',
+        summary: 'High-availability database design, optimization, and seamless cloud migration.',
+        sortOrder: 9,
+      },
+      {
+        slug: 'ecommerce-fintech-platforms',
+        name: 'E-Commerce & FinTech Platforms',
+        summary: 'Secure payment gateway integrations, checkout engines, and commerce portals.',
+        sortOrder: 10,
+      },
+      {
+        slug: 'api-microservices-architecture',
+        name: 'API & Microservices Architecture',
+        summary: 'Decoupled, event-driven microservices with robust REST & GraphQL APIs.',
+        sortOrder: 11,
+      },
+      {
+        slug: 'edtech-academic-systems',
+        name: 'EdTech & Academic Systems',
+        summary: 'Specialized portals and learning management systems for academic bodies.',
+        sortOrder: 12,
+      },
+      {
+        slug: 'healthcare-telemedicine-systems',
+        name: 'Healthcare & Telemedicine Systems',
+        summary: 'EMR, EHR, and telemedicine platforms compliant with health data standards.',
+        sortOrder: 13,
+      },
+      {
+        slug: 'it-consulting-digital-transformation',
+        name: 'IT Consulting & Digital Transformation',
+        summary: 'Strategic technology advisory guiding modernization and tech adoption.',
+        sortOrder: 14,
+      },
+    ];
+
+    for (const s of services) {
+      const createdService = await tx.service.upsert({
+        where: { slug: s.slug },
+        update: { sortOrder: s.sortOrder, isActive: true },
+        create: { slug: s.slug, sortOrder: s.sortOrder, isActive: true },
+      });
+
+      await tx.serviceTranslation.upsert({
+        where: { serviceId_locale: { serviceId: createdService.id, locale: 'en' } },
+        update: {
+          name: s.name,
+          summary: s.summary,
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+        },
+        create: {
+          serviceId: createdService.id,
+          locale: 'en',
+          name: s.name,
+          summary: s.summary,
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+        },
+      });
+    }
   });
 }
 

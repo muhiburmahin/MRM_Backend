@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { AuthConfig, authConfig } from '../auth.config';
 import type { AuthenticatedRequest } from '../interfaces/authenticated-user.interface';
 import { readCookie } from '../utils/token.util';
@@ -25,7 +31,8 @@ export class OriginGuard implements CanActivate {
       return true; // non-browser client without a session cookie (e.g. curl login in dev)
     }
     const origin = originHeader.replace(/\/$/, '');
-    if (!this.cfg.allowedOrigins.includes(origin)) throw new ForbiddenException('Origin not allowed');
+    if (!this.cfg.allowedOrigins.includes(origin))
+      throw new ForbiddenException('Origin not allowed');
     return true;
   }
 

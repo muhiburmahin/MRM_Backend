@@ -1,7 +1,28 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import {
-  ApiBadRequestResponse, ApiConflictResponse, ApiCookieAuth, ApiCreatedResponse, ApiForbiddenResponse, ApiNoContentResponse,
-  ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiCookieAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CurrentUser, Permissions } from '../../auth/decorators/auth.decorators';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
@@ -40,7 +61,8 @@ export class AdminServicesController {
   @Permissions(P.write)
   @ApiOperation({ summary: 'Create a service (publishing requires service:publish)' })
   @ApiCreatedResponse({ type: AdminServiceResponse })
-  @ApiBadRequestResponse() @ApiConflictResponse({ description: 'Slug already exists' })
+  @ApiBadRequestResponse()
+  @ApiConflictResponse({ description: 'Slug already exists' })
   create(@Body() dto: CreateServiceDto, @CurrentUser() actor: AuthenticatedUser) {
     return this.services.create(dto, actor);
   }
@@ -49,8 +71,14 @@ export class AdminServicesController {
   @Permissions(P.write)
   @ApiOperation({ summary: 'Partial update; translations are upserted by locale' })
   @ApiOkResponse({ type: AdminServiceResponse })
-  @ApiBadRequestResponse() @ApiNotFoundResponse() @ApiConflictResponse()
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateServiceDto, @CurrentUser() actor: AuthenticatedUser) {
+  @ApiBadRequestResponse()
+  @ApiNotFoundResponse()
+  @ApiConflictResponse()
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateServiceDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
     return this.services.update(id, dto, actor);
   }
 
@@ -58,8 +86,13 @@ export class AdminServicesController {
   @Permissions(P.delete)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a service (blocked while leads or case studies reference it)' })
-  @ApiNoContentResponse() @ApiNotFoundResponse() @ApiConflictResponse()
-  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: AuthenticatedUser): Promise<void> {
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse()
+  @ApiConflictResponse()
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<void> {
     await this.services.remove(id, actor);
   }
 }

@@ -26,8 +26,15 @@ export class PublicTeamListItem {
 export class PublicTeamDetail extends PublicTeamListItem {
   @ApiProperty() locale!: string;
   @ApiPropertyOptional({ nullable: true }) bio!: string | null;
-  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' } }) socialLinks!: Record<string, string>;
-  @ApiPropertyOptional({ nullable: true, description: 'Only present when the member chose to show it' }) email!: string | null;
+  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' } }) socialLinks!: Record<
+    string,
+    string
+  >;
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'Only present when the member chose to show it',
+  })
+  email!: string | null;
   @ApiProperty({ type: [String] }) availableLocales!: string[];
 }
 

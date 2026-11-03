@@ -21,7 +21,10 @@ export class PublicServiceDetail extends PublicServiceListItem {
   @ApiProperty({ type: 'object', additionalProperties: true }) body!: unknown;
   @ApiPropertyOptional({ nullable: true }) seoTitle!: string | null;
   @ApiPropertyOptional({ nullable: true }) seoDescription!: string | null;
-  @ApiProperty({ type: [String], description: 'Locales in which this service is published (for a language switcher)' })
+  @ApiProperty({
+    type: [String],
+    description: 'Locales in which this service is published (for a language switcher)',
+  })
   availableLocales!: string[];
 }
 
