@@ -1,8 +1,15 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../database/prisma.service';
 import type { AuthenticatedUser } from '../../../auth/interfaces/authenticated-user.interface';
 import { UpdateSiteSettingsDto } from './dto/update-site-settings.dto';
+import { CreateRedirectDto } from './dto/redirect.dto';
 
 const asJson = (value: unknown): Prisma.JsonNullValueInput | Prisma.InputJsonValue =>
   value === null ? Prisma.JsonNull : (value as Prisma.InputJsonValue);
@@ -35,6 +42,40 @@ export class SiteSettingsService {
       orderBy: [{ group: 'asc' }, { key: 'asc' }],
     });
     return { data: settings };
+  }
+
+  async listAdminRedirects() {
+    return this.prisma.redirect.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createRedirect(dto: CreateRedirectDto, actor: AuthenticatedUser) {
+    const fromPath = dto.fromPath.startsWith('/') ? dto.fromPath : `/${dto.fromPath}`;
+    const toPath =
+      dto.toPath.startsWith('/') || dto.toPath.startsWith('http') ? dto.toPath : `/${dto.toPath}`;
+    const existing = await this.prisma.redirect.findUnique({ where: { fromPath } });
+    if (existing) {
+      throw new ConflictException(`Redirect from "${fromPath}" already exists`);
+    }
+    const redirect = await this.prisma.redirect.create({
+      data: {
+        fromPath,
+        toPath,
+        statusCode: dto.statusCode ?? 301,
+        isActive: dto.isActive ?? true,
+      },
+    });
+    await this.audit(actor, 'redirect.create', redirect.id);
+    return redirect;
+  }
+
+  async deleteRedirect(id: string, actor: AuthenticatedUser) {
+    const existing = await this.prisma.redirect.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Redirect not found');
+    await this.prisma.redirect.delete({ where: { id } });
+    await this.audit(actor, 'redirect.delete', id);
+    return { success: true };
   }
 
   async getRedirects() {

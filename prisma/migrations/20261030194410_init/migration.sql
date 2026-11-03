@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- MRM Infotech Initial Schema Migration
 -- Migration Name: init
 -- Generated from: prisma/schema/*.prisma (63 models, 14 enums)

@@ -167,4 +167,33 @@ describe('Navigation API (e2e)', () => {
       .send({ label: { en: 'Nested' }, href: '/nested', parentId: pageId })
       .expect(400);
   });
+
+  it('allows public retrieval of navigation menus without authentication', async () => {
+    db.navigationItems.push({
+      id: 'pub-item',
+      menuId,
+      parentId: null,
+      label: { en: 'Home' },
+      description: null,
+      badge: null,
+      iconKey: null,
+      href: '/',
+      pageId: null,
+      productId: null,
+      serviceId: null,
+      newTab: false,
+      isButton: false,
+      isVisible: true,
+      sortOrder: 0,
+    });
+
+    const singleRes = await http().get('/api/v1/navigation/header').expect(200);
+    expect(singleRes.body.key).toBe('header');
+    expect(singleRes.body.items).toHaveLength(1);
+    expect(singleRes.body.items[0].href).toBe('/');
+
+    const listRes = await http().get('/api/v1/navigation').expect(200);
+    expect(Array.isArray(listRes.body.data)).toBe(true);
+    expect(listRes.body.data.length).toBeGreaterThan(0);
+  });
 });

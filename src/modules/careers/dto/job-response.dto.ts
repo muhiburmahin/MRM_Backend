@@ -30,4 +30,3 @@ export class AdminJobListItem {
   @ApiProperty() createdAt!: Date;
   @ApiProperty({ type: 'array', items: { type: 'object' } }) translations!: unknown[];
 }
-

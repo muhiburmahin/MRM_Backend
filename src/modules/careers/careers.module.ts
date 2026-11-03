@@ -12,4 +12,3 @@ import { CareersService } from './careers.service';
   exports: [CareersService],
 })
 export class CareersModule {}
-

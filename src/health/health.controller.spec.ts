@@ -12,6 +12,10 @@ describe('HealthController', () => {
       status: 'ok',
       timestamp: expect.any(String),
     });
+    expect(controller.live()).toMatchObject({
+      status: 'ok',
+      timestamp: expect.any(String),
+    });
     expect(health.isDatabaseUp).not.toHaveBeenCalled();
   });
 

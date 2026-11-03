@@ -16,4 +16,3 @@ export class RedirectsController {
     return this.settings.getRedirects();
   }
 }
-

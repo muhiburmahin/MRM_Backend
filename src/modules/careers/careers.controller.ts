@@ -43,4 +43,3 @@ export class CareersController {
     return this.careers.apply(params.slug, dto);
   }
 }
-

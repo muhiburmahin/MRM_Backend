@@ -18,8 +18,8 @@ const toBoolean = ({ value }: { value: unknown }) =>
 
 /** Every environment variable the application reads. Validated once at startup. */
 export class EnvironmentVariables {
-  @IsIn(['development', 'test', 'production'])
-  NODE_ENV: 'development' | 'test' | 'production' = 'development';
+  @IsIn(['development', 'test', 'staging', 'production'])
+  NODE_ENV: 'development' | 'test' | 'staging' | 'production' = 'development';
 
   @Type(() => Number)
   @IsInt()
@@ -36,6 +36,56 @@ export class EnvironmentVariables {
 
   @IsString()
   AUTH_ALLOWED_ORIGINS: string = '';
+
+  @IsOptional()
+  @IsString()
+  FRONTEND_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SESSION_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  TWO_FACTOR_ENCRYPTION_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  CLOUDINARY_CLOUD_NAME?: string;
+
+  @IsOptional()
+  @IsString()
+  CLOUDINARY_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  CLOUDINARY_API_SECRET?: string;
+
+  @IsOptional()
+  @Transform(toBoolean)
+  @IsBoolean()
+  MAIL_ENABLED?: boolean;
+
+  @IsOptional()
+  @IsString()
+  SMTP_HOST?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  SMTP_PORT?: number;
+
+  @IsOptional()
+  @IsString()
+  SMTP_USER?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_PASSWORD?: string;
+
+  @IsOptional()
+  @IsString()
+  MAIL_FROM?: string;
 
   @IsOptional()
   @IsString()

@@ -79,6 +79,45 @@ export class NavigationService {
     return { data: menus };
   }
 
+  async listPublicMenus() {
+    const menus = await this.prisma.navMenu.findMany({
+      orderBy: { key: 'asc' },
+      select: { id: true, key: true },
+    });
+    const results = await Promise.all(menus.map((m) => this.getPublicMenu(m.key)));
+    return { data: results };
+  }
+
+  async getPublicMenu(key: string) {
+    const menu = await this.prisma.navMenu.findUnique({
+      where: { key },
+      select: { id: true, key: true },
+    });
+    if (!menu) throw new NotFoundException('Navigation menu not found');
+    const items = (await this.prisma.navItem.findMany({
+      where: { menuId: menu.id, isVisible: true },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true,
+        menuId: true,
+        parentId: true,
+        label: true,
+        description: true,
+        badge: true,
+        iconKey: true,
+        href: true,
+        pageId: true,
+        productId: true,
+        serviceId: true,
+        newTab: true,
+        isButton: true,
+        isVisible: true,
+        sortOrder: true,
+      },
+    })) as NavigationRow[];
+    return { ...menu, items: this.buildTree(items) };
+  }
+
   async getMenu(key: string) {
     const menu = await this.prisma.navMenu.findUnique({
       where: { key },

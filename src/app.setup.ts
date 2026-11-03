@@ -2,12 +2,14 @@ import { VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
+import { json, urlencoded } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import helmet from 'helmet';
 import { AppConfigService } from './config/app-config.service';
 import { API_DEFAULT_VERSION, API_PREFIX } from './common/constants/api.constants';
 import { createValidationPipe } from './common/pipes/validation.pipe';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 const SWAGGER_PATH = 'docs';
 
@@ -16,7 +18,17 @@ const SWAGGER_PATH = 'docs';
  * (Filters, guards and logging are registered in AppModule so they get dependency injection.)
  */
 export function configureApp(app: NestExpressApplication, config: AppConfigService): void {
-  app.set('trust proxy', config.trustProxy);
+  // Trust proxy configuration for correct client IP detection behind reverse proxies
+  if (config.trustProxy !== undefined) {
+    app.set('trust proxy', config.trustProxy);
+  }
+
+  // Correlation ID middleware: ensures every request and response has an X-Request-Id header
+  app.use(new RequestIdMiddleware().use);
+
+  // Request body size limits to prevent denial-of-service via oversized payloads
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
 
   // Secure HTTP headers. Swagger UI needs inline scripts/styles, so only /docs gets a relaxed CSP.
   const apiHelmet = helmet();

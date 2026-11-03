@@ -11,6 +11,18 @@ import { QueryBlogDto } from './dto/query-blog.dto';
 export class BlogController {
   constructor(private readonly blog: BlogService) {}
 
+  @Get('categories')
+  @ApiOperation({ summary: 'List all blog categories (public)' })
+  categories() {
+    return this.blog.listCategories();
+  }
+
+  @Get('tags')
+  @ApiOperation({ summary: 'List all blog tags (public)' })
+  tags() {
+    return this.blog.listTags();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List published posts (public)' })
   list(@Query() query: QueryBlogDto) {

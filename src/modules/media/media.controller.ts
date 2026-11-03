@@ -33,6 +33,7 @@ import { MediaKind } from '@prisma/client';
 import { CurrentUser, Permissions } from '../../auth/decorators/auth.decorators';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { MediaService } from './media.service';
+import { CloudinaryService } from './cloudinary.service';
 import { QueryMediaDto } from './dto/query-media.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { UploadMediaDto } from './dto/upload-media.dto';
@@ -85,7 +86,10 @@ const uploadFilter = (
 @ApiForbiddenResponse({ description: 'Missing media permission' })
 @Controller({ path: 'admin/media', version: '1' })
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
 
   @Post('upload')
   @Permissions('media:upload')
@@ -98,7 +102,8 @@ export class MediaController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
-    summary: 'Upload a media file up to 10MB to local storage and create asset metadata',
+    summary:
+      'Upload a media file up to 10MB to storage (Cloudinary or local fallback) and create asset metadata',
   })
   @ApiCreatedResponse()
   async upload(
@@ -130,8 +135,22 @@ export class MediaController {
       }
     }
 
-    const storageKey = `uploads/${file.filename}`;
-    const url = `/uploads/${file.filename}`;
+    let storageKey = `uploads/${file.filename}`;
+    let url = `/uploads/${file.filename}`;
+    let sizeBytes = file.size;
+    let width: number | null | undefined = undefined;
+    let height: number | null | undefined = undefined;
+
+    if (this.cloudinary.isEnabled && file.path) {
+      const result = await this.cloudinary.uploadFile(file.path);
+      if (result) {
+        url = result.url;
+        storageKey = result.publicId;
+        sizeBytes = result.bytes;
+        width = result.width;
+        height = result.height;
+      }
+    }
 
     return this.mediaService.create(
       {
@@ -140,7 +159,9 @@ export class MediaController {
         url,
         fileName: file.originalname,
         mimeType: file.mimetype,
-        sizeBytes: file.size,
+        sizeBytes,
+        width,
+        height,
         folderId: dto.folderId || null,
         alt,
         caption,

@@ -179,4 +179,3 @@ export class ApplyJobDto {
   @IsBoolean()
   consentGiven!: boolean;
 }
-

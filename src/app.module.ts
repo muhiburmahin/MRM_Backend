@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { randomUUID } from 'node:crypto';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { RequestTimingInterceptor } from './common/interceptors/request-timing.interceptor';
 import { REQUEST_ID_HEADER } from './common/constants/api.constants';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfigService } from './config/app-config.service';
@@ -104,6 +106,8 @@ const SAFE_REQUEST_ID = /^[\w-]{8,64}$/; // reject anything that could pollute l
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: RequestTimingInterceptor },
   ],
 })
 export class AppModule {}

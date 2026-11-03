@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SiteSettingsController } from './site-settings.controller';
 import { AdminSiteSettingsController } from './admin-site-settings.controller';
+import { AdminRedirectsController } from './admin-redirects.controller';
 import { RedirectsController } from './redirects.controller';
 import { SitemapController } from './sitemap.controller';
 import { SiteSettingsService } from './site-settings.service';
@@ -11,9 +12,11 @@ import { DatabaseModule } from '../../../database/database.module';
   controllers: [
     SiteSettingsController,
     AdminSiteSettingsController,
+    AdminRedirectsController,
     RedirectsController,
     SitemapController,
   ],
   providers: [SiteSettingsService],
+  exports: [SiteSettingsService],
 })
 export class SiteSettingsModule {}

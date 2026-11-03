@@ -19,4 +19,3 @@ export class UploadFileDto {
   @MaxLength(1000)
   caption?: string;
 }
-

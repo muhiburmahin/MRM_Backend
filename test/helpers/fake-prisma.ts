@@ -169,6 +169,10 @@ export class FakePrisma {
   readonly pages: Data[] = [];
   readonly navigationMenus: Data[] = [];
   readonly navigationItems: Data[] = [];
+  readonly clients: Data[] = [];
+  readonly categories: Data[] = [];
+  readonly tagsList: Data[] = [];
+  readonly redirects: Data[] = [];
 
   readonly language = {
     findMany: async ({ where }: Data = {}): Promise<Data[]> => {
@@ -871,7 +875,70 @@ export class FakePrisma {
   readonly auditLog = { create: async ({ data }: { data: Data }) => data };
 
   readonly caseStudy = { findFirst: async () => null };
-  readonly client = { findFirst: async () => null };
+  readonly client = {
+    findMany: async () => [...this.clients],
+    findUnique: async ({ where }: Data) => {
+      const match = this.clients.find((c) => c.id === asData(where).id);
+      return match ? { ...match, caseStudies: [], testimonials: [] } : null;
+    },
+    findFirst: async () => this.clients[0] ?? null,
+    create: async ({ data }: Data) => {
+      const row = { id: randomUUID(), ...asData(data) };
+      this.clients.push(row);
+      return row;
+    },
+    update: async ({ where, data }: Data) => {
+      const match = this.clients.find((c) => c.id === asData(where).id);
+      if (match) assignDefined(match, data);
+      return match ?? null;
+    },
+    delete: async ({ where }: Data) => {
+      const idx = this.clients.findIndex((c) => c.id === asData(where).id);
+      if (idx >= 0) this.clients.splice(idx, 1);
+      return { success: true };
+    },
+  };
+
+  readonly postCategory = {
+    findMany: async () => [...this.categories],
+    findUnique: async ({ where }: Data) => {
+      const w = asData(where);
+      return this.categories.find((c) => (w.id ? c.id === w.id : c.slug === w.slug)) ?? null;
+    },
+    create: async ({ data }: Data) => {
+      const row = { id: randomUUID(), ...asData(data) };
+      this.categories.push(row);
+      return row;
+    },
+    update: async ({ where, data }: Data) => {
+      const match = this.categories.find((c) => c.id === asData(where).id);
+      if (match) assignDefined(match, data);
+      return match ?? null;
+    },
+    delete: async ({ where }: Data) => {
+      const idx = this.categories.findIndex((c) => c.id === asData(where).id);
+      if (idx >= 0) this.categories.splice(idx, 1);
+      return { success: true };
+    },
+  };
+
+  readonly tag = {
+    findMany: async () => [...this.tagsList],
+    findUnique: async ({ where }: Data) => {
+      const w = asData(where);
+      return this.tagsList.find((t) => (w.id ? t.id === w.id : t.slug === w.slug)) ?? null;
+    },
+    create: async ({ data }: Data) => {
+      const row = { id: randomUUID(), ...asData(data) };
+      this.tagsList.push(row);
+      return row;
+    },
+    delete: async ({ where }: Data) => {
+      const idx = this.tagsList.findIndex((t) => t.id === asData(where).id);
+      if (idx >= 0) this.tagsList.splice(idx, 1);
+      return { success: true };
+    },
+  };
   readonly pageTranslation = { findFirst: async () => null };
   readonly teamMember = { findFirst: async () => null };
   readonly technology = { findFirst: async () => null };

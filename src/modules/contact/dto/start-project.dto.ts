@@ -72,4 +72,3 @@ export class StartProjectDto {
   @IsBoolean()
   consentGiven!: boolean;
 }
-

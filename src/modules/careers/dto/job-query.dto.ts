@@ -47,4 +47,3 @@ export class JobSlugParamDto {
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'slug must be lowercase kebab-case' })
   slug!: string;
 }
-

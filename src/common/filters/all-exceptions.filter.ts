@@ -1,16 +1,20 @@
 import { ArgumentsHost, Catch, ExceptionFilter, Injectable } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { PinoLogger } from 'nestjs-pino';
-import { mapException } from './exception-mapper';
+import { mapException, ValidationErrorDetail } from './exception-mapper';
 
 export interface ErrorResponseBody {
+  success: false;
   statusCode: number;
   error: string;
   message: string | string[];
   requestId?: string;
   path: string;
   timestamp: string;
+  details?: ValidationErrorDetail[];
 }
+
+export type StandardErrorResponse = ErrorResponseBody;
 
 /** One consistent error shape for the whole API. */
 @Catch()
@@ -40,12 +44,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     const body: ErrorResponseBody = {
+      success: false,
       statusCode: mapped.status,
       error: mapped.error,
       message: mapped.message,
       requestId,
       path: request.originalUrl?.split('?')[0] ?? request.url,
       timestamp: new Date().toISOString(),
+      ...(mapped.details && mapped.details.length > 0 ? { details: mapped.details } : {}),
     };
     response.status(mapped.status).json(body);
   }

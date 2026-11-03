@@ -13,6 +13,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { CreateBlogDto, CreatePostTranslationDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { AdminQueryBlogDto, QueryBlogDto } from './dto/query-blog.dto';
+import { CreateCategoryDto, CreateTagDto, UpdateCategoryDto } from './dto/category-tag.dto';
 
 const PUBLISH_PERMISSION = 'post:publish';
 
@@ -342,5 +343,73 @@ export class BlogService {
         throw new BadRequestException('A referenced category or asset does not exist');
     }
     throw error;
+  }
+
+  async listCategories() {
+    return this.prisma.postCategory.findMany({
+      orderBy: { slug: 'asc' },
+    });
+  }
+
+  async createCategory(dto: CreateCategoryDto) {
+    const existing = await this.prisma.postCategory.findUnique({ where: { slug: dto.slug } });
+    if (existing) throw new ConflictException(`Category with slug "${dto.slug}" already exists`);
+    return this.prisma.postCategory.create({
+      data: {
+        slug: dto.slug,
+        i18n: dto.i18n as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  async updateCategory(id: string, dto: UpdateCategoryDto) {
+    const category = await this.prisma.postCategory.findUnique({ where: { id } });
+    if (!category) throw new NotFoundException('Category not found');
+    if (dto.slug && dto.slug !== category.slug) {
+      const existing = await this.prisma.postCategory.findUnique({ where: { slug: dto.slug } });
+      if (existing) throw new ConflictException(`Category with slug "${dto.slug}" already exists`);
+    }
+    return this.prisma.postCategory.update({
+      where: { id },
+      data: {
+        ...(dto.slug ? { slug: dto.slug } : {}),
+        ...(dto.i18n ? { i18n: dto.i18n as Prisma.InputJsonValue } : {}),
+      },
+    });
+  }
+
+  async deleteCategory(id: string) {
+    const category = await this.prisma.postCategory.findUnique({
+      where: { id },
+    });
+    if (!category) throw new NotFoundException('Category not found');
+    await this.prisma.postCategory.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async listTags() {
+    return this.prisma.tag.findMany({
+      orderBy: { slug: 'asc' },
+    });
+  }
+
+  async createTag(dto: CreateTagDto) {
+    const existing = await this.prisma.tag.findUnique({ where: { slug: dto.slug } });
+    if (existing) throw new ConflictException(`Tag with slug "${dto.slug}" already exists`);
+    return this.prisma.tag.create({
+      data: {
+        slug: dto.slug,
+        i18n: dto.i18n as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  async deleteTag(id: string) {
+    const tag = await this.prisma.tag.findUnique({
+      where: { id },
+    });
+    if (!tag) throw new NotFoundException('Tag not found');
+    await this.prisma.tag.delete({ where: { id } });
+    return { success: true };
   }
 }

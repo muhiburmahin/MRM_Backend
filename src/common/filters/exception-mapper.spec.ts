@@ -22,6 +22,12 @@ describe('mapException', () => {
     expect(r.message).toEqual(['name must be a string', 'email must be an email']);
   });
 
+  it('forwards validation error details if provided in response', () => {
+    const details = [{ field: 'email', message: 'must be an email' }];
+    const r = mapException(new BadRequestException({ message: 'Validation failed', details }));
+    expect(r.details).toEqual(details);
+  });
+
   it('keeps client-safe 404 messages', () => {
     expect(mapException(new NotFoundException('Product not found'))).toMatchObject({
       status: 404,

@@ -4,4 +4,3 @@ export const CAREERS_PERMISSIONS = {
   publish: 'content:publish',
   delete: 'content:delete',
 } as const;
-

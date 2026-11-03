@@ -16,4 +16,3 @@ export class SitemapController {
     return this.settings.getSitemapData();
   }
 }
-

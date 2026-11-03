@@ -2,12 +2,18 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { STATUS_CODES } from 'node:http';
 
+export interface ValidationErrorDetail {
+  field: string;
+  message: string;
+}
+
 export interface MappedException {
   status: number;
   error: string;
   message: string | string[];
   /** true => unexpected server-side problem that must be logged with its stack */
   unexpected: boolean;
+  details?: ValidationErrorDetail[];
 }
 
 const PRISMA_CODE_MAP: Record<string, { status: HttpStatus; message: string }> = {
@@ -33,10 +39,20 @@ export function mapException(exception: unknown): MappedException {
     const status = exception.getStatus();
     const body = exception.getResponse();
     let message: string | string[] = exception.message;
-    if (typeof body === 'string') message = body;
-    else if (typeof body === 'object' && body !== null && 'message' in body) {
-      message = (body as { message: string | string[] }).message;
+    let details: ValidationErrorDetail[] | undefined;
+
+    if (typeof body === 'string') {
+      message = body;
+    } else if (typeof body === 'object' && body !== null) {
+      const bodyObj = body as Record<string, unknown>;
+      if ('message' in bodyObj) {
+        message = bodyObj.message as string | string[];
+      }
+      if (Array.isArray(bodyObj.details)) {
+        details = bodyObj.details as ValidationErrorDetail[];
+      }
     }
+
     const isServerError = status >= 500;
     // Only a plain 500 is a bug worth a stack-trace log; a deliberate 503 is an expected condition.
     const unexpected = status === 500;
@@ -45,6 +61,7 @@ export function mapException(exception: unknown): MappedException {
       error: STATUS_CODES[status] ?? 'Error',
       message: isServerError ? (GENERIC_5XX[status] ?? INTERNAL) : message,
       unexpected,
+      ...(details && details.length > 0 ? { details } : {}),
     };
   }
 
