@@ -11,6 +11,7 @@ import {
   Post,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -24,7 +25,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { randomBytes } from 'crypto';
@@ -168,6 +169,81 @@ export class MediaController {
       },
       actor,
     );
+  }
+
+  @Post('upload-multiple')
+  @Permissions('media:upload')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: uploadStorage,
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: uploadFilter,
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Upload up to 10 media files to storage (Cloudinary or local fallback) in a single request',
+  })
+  @ApiCreatedResponse()
+  async uploadMultiple(
+    @UploadedFiles() files: Express.Multer.File[],
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one file is required in "files" form field');
+    }
+
+    const items = await Promise.all(
+      files.map(async (file) => {
+        const kind = ALLOWED_MIME_TYPES[file.mimetype] ?? MediaKind.OTHER;
+        const alt = { en: file.originalname };
+        let storageKey = `uploads/${file.filename}`;
+        let url = `/uploads/${file.filename}`;
+        let sizeBytes = file.size;
+        let width: number | null | undefined = undefined;
+        let height: number | null | undefined = undefined;
+
+        if (this.cloudinary.isEnabled && file.path) {
+          const result = await this.cloudinary.uploadFile(file.path);
+          if (result) {
+            url = result.url;
+            storageKey = result.publicId;
+            sizeBytes = result.bytes;
+            width = result.width;
+            height = result.height;
+          }
+        }
+
+        const asset = await this.mediaService.create(
+          {
+            kind,
+            storageKey,
+            url,
+            fileName: file.originalname,
+            mimeType: file.mimetype,
+            sizeBytes,
+            width,
+            height,
+            folderId: null,
+            alt,
+            caption: undefined,
+          },
+          actor,
+        );
+
+        return {
+          id: asset.id,
+          url: asset.url,
+          fileName: asset.fileName,
+          sizeBytes: asset.sizeBytes,
+        };
+      }),
+    );
+
+    return {
+      urls: items.map((i) => i.url),
+      items,
+    };
   }
 
   @Post()
