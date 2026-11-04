@@ -79,6 +79,59 @@ export class UpsertTeamTranslationDto {
 
 /** Fields shared by create and update (all optional here; create requires slug + translations). */
 class TeamMemberFieldsDto {
+  @ApiPropertyOptional({ maxLength: 120 })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(120)
+  name?: string;
+
+  @ApiPropertyOptional({ maxLength: 120 })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(120)
+  role?: string;
+
+  @ApiPropertyOptional({ description: 'Direct image URL or upload URL' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  photo?: string | null;
+
+  @ApiPropertyOptional({ maxLength: 5000 })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(5000)
+  bio?: string | null;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(500)
+  linkedinUrl?: string | null;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  @MaxLength(500)
+  githubUrl?: string | null;
+
+  @ApiPropertyOptional({ default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  order?: number;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
   @ApiPropertyOptional({ maxLength: 80, nullable: true })
   @IsOptional()
   @Trim()
@@ -129,7 +182,7 @@ class TeamMemberFieldsDto {
   sortOrder?: number;
 
   @ApiPropertyOptional({
-    default: false,
+    default: true,
     description: "Listing on the public website. Requires the member's consent.",
   })
   @IsOptional()
@@ -146,19 +199,20 @@ class TeamMemberFieldsDto {
 }
 
 export class CreateTeamMemberDto extends TeamMemberFieldsDto {
-  @ApiProperty({ example: 'jane-doe' })
+  @ApiPropertyOptional({ example: 'jane-doe' })
+  @IsOptional()
   @Trim()
   @Matches(SLUG_RE)
   @MaxLength(80)
-  slug!: string;
+  slug?: string;
 
-  @ApiProperty({ type: [CreateTeamTranslationDto] })
+  @ApiPropertyOptional({ type: [CreateTeamTranslationDto] })
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(10)
   @ValidateNested({ each: true })
   @Type(() => CreateTeamTranslationDto)
-  translations!: CreateTeamTranslationDto[];
+  translations?: CreateTeamTranslationDto[];
 }
 
 export class UpdateTeamMemberDto extends TeamMemberFieldsDto {

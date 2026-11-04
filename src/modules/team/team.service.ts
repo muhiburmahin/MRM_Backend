@@ -60,37 +60,93 @@ export class TeamService {
 
   async listPublic(query: QueryTeamDto) {
     const locale = await this.resolveLocale(query.locale);
-    const where = this.publicWhere(locale, query.q, query.department);
-    const tie = { member: { slug: 'asc' as const } };
+    const where: any = {
+      isActive: true,
+      isPublic: true,
+      ...(query.department ? { department: { equals: query.department, mode: 'insensitive' as const } } : {}),
+    };
+
+    if (query.q) {
+      where.OR = [
+        { name: { contains: query.q, mode: 'insensitive' as const } },
+        { role: { contains: query.q, mode: 'insensitive' as const } },
+        {
+          translations: {
+            some: {
+              OR: [
+                { name: { contains: query.q, mode: 'insensitive' as const } },
+                { roleTitle: { contains: query.q, mode: 'insensitive' as const } },
+              ],
+            },
+          },
+        },
+      ];
+    }
+
+    const dir: SortOrder = query.order || 'asc';
     const orderBy =
       query.sort === 'name'
-        ? [{ name: query.order }, tie]
-        : [{ member: { sortOrder: query.order } }, tie];
+        ? [{ name: dir }, { order: 'asc' as const }]
+        : [{ order: dir }, { sortOrder: dir }, { createdAt: 'desc' as const }];
 
     const [total, rows] = await Promise.all([
-      this.prisma.teamMemberTranslation.count({ where }),
-      this.prisma.teamMemberTranslation.findMany({
+      this.prisma.teamMember.count({ where }),
+      this.prisma.teamMember.findMany({
         where,
         orderBy,
         skip: (query.page - 1) * query.limit,
         take: query.limit,
         select: {
+          id: true,
+          slug: true,
           name: true,
-          roleTitle: true,
-          member: { select: { slug: true, photoId: true, department: true, sortOrder: true } },
+          role: true,
+          photo: true,
+          bio: true,
+          email: true,
+          showEmail: true,
+          linkedinUrl: true,
+          githubUrl: true,
+          order: true,
+          sortOrder: true,
+          department: true,
+          photoId: true,
+          translations: {
+            where: { locale },
+            select: { name: true, roleTitle: true, bio: true },
+          },
         },
       }),
     ]);
-    const photos = await this.photoMap(rows.map((r) => r.member.photoId));
+
+    const photos = await this.photoMap(rows.map((r) => r.photoId));
+
     return {
-      data: rows.map((r) => ({
-        slug: r.member.slug,
-        name: r.name,
-        roleTitle: r.roleTitle,
-        department: r.member.department,
-        photo: this.photoOf(r.member.photoId, photos, locale, r.name),
-        sortOrder: r.member.sortOrder,
-      })),
+      data: rows.map((r) => {
+        const trans = r.translations?.[0];
+        const displayName = trans?.name || r.name || r.slug;
+        const displayRole = trans?.roleTitle || r.role || 'Team Member';
+        const displayBio = trans?.bio || r.bio;
+        const mediaPhoto = this.photoOf(r.photoId, photos, locale, displayName);
+        const resolvedPhoto = r.photo || mediaPhoto?.url || null;
+
+        return {
+          id: r.id,
+          slug: r.slug,
+          name: displayName,
+          role: displayRole,
+          roleTitle: displayRole,
+          photo: resolvedPhoto,
+          photoUrl: resolvedPhoto,
+          bio: displayBio,
+          email: r.showEmail ? r.email : null,
+          linkedinUrl: r.linkedinUrl,
+          githubUrl: r.githubUrl,
+          order: r.order ?? r.sortOrder ?? 0,
+          sortOrder: r.sortOrder ?? r.order ?? 0,
+          department: r.department,
+        };
+      }),
       meta: meta(query.page, query.limit, total),
     };
   }
@@ -141,6 +197,9 @@ export class TeamService {
     const search = query.q
       ? [
           { slug: { contains: query.q, mode: 'insensitive' as const } },
+          { name: { contains: query.q, mode: 'insensitive' as const } },
+          { role: { contains: query.q, mode: 'insensitive' as const } },
+          { email: { contains: query.q, mode: 'insensitive' as const } },
           {
             translations: {
               some: {
@@ -161,17 +220,21 @@ export class TeamService {
       ...(search ? { OR: search } : {}),
     };
     const dir: SortOrder = query.order;
-    const orderBy = {
+    const orderByMap: Record<string, unknown> = {
+      order: { order: dir },
       sortOrder: { sortOrder: dir },
       slug: { slug: dir },
       joinedAt: { joinedAt: dir },
-    }[query.sort];
+      createdAt: { createdAt: dir },
+      updatedAt: { updatedAt: dir },
+    };
+    const orderBy = orderByMap[query.sort] || { order: dir };
 
     const [total, rows] = await Promise.all([
       this.prisma.teamMember.count({ where }),
       this.prisma.teamMember.findMany({
         where,
-        orderBy: [orderBy, { id: 'asc' }],
+        orderBy: [orderBy as never, { id: 'asc' }],
         skip: (query.page - 1) * query.limit,
         take: query.limit,
         select: this.adminSelect,
@@ -190,27 +253,74 @@ export class TeamService {
   }
 
   async create(dto: CreateTeamMemberDto, actor: AuthenticatedUser) {
+    const order = dto.order ?? dto.sortOrder ?? 0;
+    dto.order = order;
+    dto.sortOrder = order;
+
+    if (!dto.translations || dto.translations.length === 0) {
+      const memberName = dto.name || 'Team Member';
+      const memberRole = dto.role || 'Member';
+      const memberBio = dto.bio || null;
+      dto.translations = [
+        {
+          locale: 'en',
+          name: memberName,
+          roleTitle: memberRole,
+          bio: memberBio,
+        },
+      ];
+    }
+
+    const primaryName = dto.name || dto.translations[0]?.name || 'Team Member';
+    const primaryRole = dto.role || dto.translations[0]?.roleTitle || 'Member';
+    const primaryBio = dto.bio || dto.translations[0]?.bio || null;
+
+    let slug = dto.slug;
+    if (!slug) {
+      slug = primaryName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      if (!slug) slug = `member-${Date.now()}`;
+    }
+
     const locales = dto.translations.map((t) => t.locale);
     this.assertUnique(locales);
     await this.assertLocalesEnabled(locales);
     await this.assertPhotoExists(dto.photoId);
     this.assertEmailRule(dto.email ?? null, dto.showEmail ?? false);
+
+    if (dto.consentGiven === undefined && dto.isPublic !== false) {
+      dto.consentGiven = true;
+    }
     const consent = this.resolveConsent(null, dto);
     if (consent.isPublic) this.requirePublish(actor);
 
     try {
       const created = await this.prisma.teamMember.create({
         data: {
-          slug: dto.slug,
-          department: dto.department ?? null,
+          slug,
+          name: primaryName,
+          role: primaryRole,
+          photo: dto.photo ?? null,
+          bio: primaryBio,
           email: dto.email ? dto.email.toLowerCase() : null,
           showEmail: dto.showEmail ?? false,
+          linkedinUrl: dto.linkedinUrl ?? null,
+          githubUrl: dto.githubUrl ?? null,
+          order,
+          sortOrder: order,
+          isActive: dto.isActive !== undefined ? dto.isActive : true,
           photoId: dto.photoId ?? null,
-          socialLinks: asJson(dto.socialLinks ?? {}),
+          department: dto.department ?? null,
+          socialLinks: asJson(dto.socialLinks ?? {
+            linkedin: dto.linkedinUrl || '',
+            github: dto.githubUrl || '',
+          }),
           joinedAt: dto.joinedAt ?? null,
-          ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
-          isPublic: consent.isPublic ?? false,
-          consentAt: consent.consentAt ?? null,
+          isPublic: consent.isPublic ?? true,
+          consentAt: consent.consentAt ?? new Date(),
           translations: {
             create: dto.translations.map((t) => ({
               locale: t.locale,
@@ -223,9 +333,9 @@ export class TeamService {
         select: { id: true },
       });
       await this.audit(actor, 'team.create', created.id, {
-        slug: dto.slug,
+        slug,
         locales,
-        isPublic: consent.isPublic ?? false,
+        isPublic: consent.isPublic ?? true,
       });
       return this.getAdmin(created.id);
     } catch (err) {
@@ -248,6 +358,12 @@ export class TeamService {
     });
     if (!cur) throw new NotFoundException('Team member not found');
 
+    if (dto.order !== undefined && dto.sortOrder === undefined) {
+      dto.sortOrder = dto.order;
+    } else if (dto.sortOrder !== undefined && dto.order === undefined) {
+      dto.order = dto.sortOrder;
+    }
+
     const incoming = dto.translations ?? [];
     const locales = incoming.map((t) => t.locale);
     this.assertUnique(locales);
@@ -266,6 +382,10 @@ export class TeamService {
       dto.email !== undefined ? dto.email : cur.email,
       dto.showEmail ?? cur.showEmail,
     );
+
+    if (dto.consentGiven === undefined && dto.isPublic === true && !cur.consentAt) {
+      dto.consentGiven = true;
+    }
     const consent = this.resolveConsent(cur, dto);
 
     // Publishing, or changing anything visible about an already-public profile, needs the publish permission.
@@ -274,6 +394,14 @@ export class TeamService {
       (dto.slug !== undefined && dto.slug !== cur.slug) ||
       (
         [
+          'name',
+          'role',
+          'photo',
+          'bio',
+          'linkedinUrl',
+          'githubUrl',
+          'order',
+          'isActive',
           'department',
           'email',
           'showEmail',
@@ -291,6 +419,15 @@ export class TeamService {
           where: { id },
           data: {
             ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
+            ...(dto.name !== undefined ? { name: dto.name } : {}),
+            ...(dto.role !== undefined ? { role: dto.role } : {}),
+            ...(dto.photo !== undefined ? { photo: dto.photo } : {}),
+            ...(dto.bio !== undefined ? { bio: dto.bio } : {}),
+            ...(dto.linkedinUrl !== undefined ? { linkedinUrl: dto.linkedinUrl } : {}),
+            ...(dto.githubUrl !== undefined ? { githubUrl: dto.githubUrl } : {}),
+            ...(dto.order !== undefined ? { order: dto.order } : {}),
+            ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+            ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
             ...(dto.department !== undefined ? { department: dto.department } : {}),
             ...(dto.email !== undefined
               ? { email: dto.email ? dto.email.toLowerCase() : null }
@@ -299,11 +436,26 @@ export class TeamService {
             ...(dto.photoId !== undefined ? { photoId: dto.photoId } : {}),
             ...(dto.socialLinks !== undefined ? { socialLinks: asJson(dto.socialLinks) } : {}),
             ...(dto.joinedAt !== undefined ? { joinedAt: dto.joinedAt } : {}),
-            ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
             ...(consent.isPublic !== undefined ? { isPublic: consent.isPublic } : {}),
             ...(consent.consentAt !== undefined ? { consentAt: consent.consentAt } : {}),
           },
         });
+
+        // Sync with primary translations if direct fields are provided and translations omitted
+        if (incoming.length === 0 && (dto.name !== undefined || dto.role !== undefined || dto.bio !== undefined)) {
+          const transData: Record<string, string | null> = {};
+          if (dto.name !== undefined) transData.name = dto.name;
+          if (dto.role !== undefined) transData.roleTitle = dto.role;
+          if (dto.bio !== undefined) transData.bio = dto.bio;
+          
+          if (existingLocales.has('en')) {
+            await tx.teamMemberTranslation.update({
+              where: { memberId_locale: { memberId: id, locale: 'en' } },
+              data: transData,
+            });
+          }
+        }
+
         for (const t of incoming) {
           const data = {
             ...(t.name !== undefined ? { name: t.name } : {}),
@@ -366,15 +518,25 @@ export class TeamService {
   private readonly adminSelect = {
     id: true,
     slug: true,
-    photoId: true,
-    department: true,
+    name: true,
+    role: true,
+    photo: true,
+    bio: true,
     email: true,
     showEmail: true,
+    linkedinUrl: true,
+    githubUrl: true,
+    order: true,
+    sortOrder: true,
+    isActive: true,
+    photoId: true,
+    department: true,
     socialLinks: true,
     isPublic: true,
     consentAt: true,
-    sortOrder: true,
     joinedAt: true,
+    createdAt: true,
+    updatedAt: true,
     translations: {
       select: { locale: true, name: true, roleTitle: true, bio: true },
       orderBy: { locale: 'asc' as const },

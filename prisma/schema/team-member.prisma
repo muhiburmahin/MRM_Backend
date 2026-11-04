@@ -1,15 +1,25 @@
 model TeamMember {
   id           String                  @id @default(uuid()) @db.Uuid
   slug         String                  @unique
-  photoId      String?                 @db.Uuid // -> MediaAsset.id
-  department   String?
+  name         String?
+  role         String?
+  photo        String?
+  bio          String?                 @db.Text
   email        String?
   showEmail    Boolean                 @default(false)
-  socialLinks  Json                    @default("{}")
-  isPublic     Boolean                 @default(false) // member consent to be listed
-  consentAt    DateTime?
+  linkedinUrl  String?
+  githubUrl    String?
+  order        Int                     @default(0)
   sortOrder    Int                     @default(0)
+  isActive     Boolean                 @default(true)
+  isPublic     Boolean                 @default(true) // member consent to be listed
+  photoId      String?                 @db.Uuid // -> MediaAsset.id
+  department   String?
+  socialLinks  Json                    @default("{}")
+  consentAt    DateTime?
   joinedAt     DateTime?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
   translations TeamMemberTranslation[]
   posts        Post[]
 }
