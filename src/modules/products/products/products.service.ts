@@ -23,20 +23,23 @@ export class ProductsService {
     const locales = await this.publicLocales(query.locale);
     const now = new Date();
     const where: Prisma.ProductWhereInput = {
-      stage: 'LIVE',
-      translations: {
-        some: {
-          locale: { in: locales },
-          status: ContentStatus.PUBLISHED,
-          publishedAt: { lte: now },
-          ...(query.search && {
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { summary: { contains: query.search, mode: 'insensitive' } },
-            ],
-          }),
-        },
-      },
+      stage: { in: ['LIVE', 'BETA', 'COMING_SOON'] as any },
+      ...(query.search && {
+        OR: [
+          { title: { contains: query.search, mode: 'insensitive' } },
+          { description: { contains: query.search, mode: 'insensitive' } },
+          {
+            translations: {
+              some: {
+                OR: [
+                  { name: { contains: query.search, mode: 'insensitive' } },
+                  { summary: { contains: query.search, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        ],
+      }),
     };
     const [products, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
@@ -65,24 +68,16 @@ export class ProductsService {
 
   async findPublicBySlug(slug: string, locale = 'en') {
     const locales = await this.publicLocales(locale);
-    const translations = await this.prisma.productTranslation.findMany({
-      where: {
-        product: { slug, stage: 'LIVE' },
-        locale: { in: locales },
-        status: ContentStatus.PUBLISHED,
-        publishedAt: { lte: new Date() },
+    const product = await this.prisma.product.findUnique({
+      where: { slug },
+      include: {
+        translations: {
+          where: { locale: { in: locales } },
+        },
       },
-      include: { product: true },
     });
-    const translation = locales
-      .map((code) => translations.find((item) => item.locale === code))
-      .find(Boolean);
-    if (!translation) throw new NotFoundException('Product not found');
-    return this.publicProduct(
-      { ...translation.product, translations: [translation] },
-      locales,
-      translation,
-    );
+    if (!product) throw new NotFoundException('Product not found');
+    return this.publicProduct(product, locales);
   }
 
   async listAdmin(query: AdminQueryProductDto) {
@@ -152,17 +147,43 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto, actor: AuthenticatedUser) {
-    const translations = await this.translationsData(dto.translations, actor);
+    const hasExplicitTranslations = Boolean(dto.translations && dto.translations.length > 0);
+    const translations = hasExplicitTranslations
+      ? await this.translationsData(dto.translations!, actor)
+      : [
+          {
+            locale: 'en',
+            name: dto.title || dto.slug,
+            tagline: dto.tagline || '',
+            summary: dto.description || dto.tagline || dto.title || dto.slug,
+            body: {} as Prisma.InputJsonValue,
+            status: ContentStatus.PUBLISHED,
+            publishedAt: new Date(),
+            ogImageId: undefined,
+            seoTitle: dto.title || dto.slug,
+            seoDescription: dto.description || dto.tagline,
+            noIndex: false,
+          },
+        ];
+
     try {
       const product = await this.prisma.product.create({
         data: {
           slug: dto.slug,
-          stage: dto.stage,
+          stage: (dto.stage as any) ?? 'LIVE',
+          title: dto.title || dto.slug,
+          tagline: dto.tagline,
+          description: dto.description,
+          images: dto.images ?? [],
+          liveUrl: dto.liveUrl,
+          caseStudy: dto.caseStudy,
+          sourceCodeUrl: dto.sourceCodeUrl,
+          isSourcePrivate: dto.isSourcePrivate ?? false,
           logoId: dto.logoId,
           heroImageId: dto.heroImageId,
           brandColor: dto.brandColor,
-          productSiteUrl: dto.productSiteUrl,
-          demoUrl: dto.demoUrl,
+          productSiteUrl: dto.productSiteUrl ?? dto.liveUrl,
+          demoUrl: dto.demoUrl ?? dto.liveUrl,
           privacyUrl: dto.privacyUrl,
           termsUrl: dto.termsUrl,
           isFeatured: dto.isFeatured ?? false,
@@ -192,10 +213,28 @@ export class ProductsService {
     ) {
       throw new ForbiddenException('Publishing a product requires product:publish');
     }
+
     const translations =
-      dto.translations === undefined
-        ? undefined
-        : await this.translationsData(dto.translations, actor, existing.translations);
+      dto.translations !== undefined
+        ? await this.translationsData(dto.translations, actor, existing.translations)
+        : dto.title || dto.tagline || dto.description
+        ? [
+            {
+              locale: 'en',
+              name: dto.title || existing.title || dto.slug || existing.slug,
+              tagline: dto.tagline ?? existing.tagline ?? '',
+              summary: dto.description ?? existing.description ?? '',
+              body: {} as Prisma.InputJsonValue,
+              status: ContentStatus.PUBLISHED,
+              publishedAt: new Date(),
+              ogImageId: undefined,
+              seoTitle: dto.title,
+              seoDescription: dto.description,
+              noIndex: false,
+            },
+          ]
+        : undefined;
+
     try {
       const product = await this.prisma.$transaction(async (tx) => {
         if (translations) {
@@ -212,12 +251,20 @@ export class ProductsService {
           where: { id },
           data: {
             slug: dto.slug,
-            stage: dto.stage,
+            stage: dto.stage ? (dto.stage as any) : undefined,
+            title: dto.title,
+            tagline: dto.tagline,
+            description: dto.description,
+            images: dto.images,
+            liveUrl: dto.liveUrl,
+            caseStudy: dto.caseStudy,
+            sourceCodeUrl: dto.sourceCodeUrl,
+            isSourcePrivate: dto.isSourcePrivate,
             logoId: dto.logoId,
             heroImageId: dto.heroImageId,
             brandColor: dto.brandColor,
-            productSiteUrl: dto.productSiteUrl,
-            demoUrl: dto.demoUrl,
+            productSiteUrl: dto.productSiteUrl ?? dto.liveUrl,
+            demoUrl: dto.demoUrl ?? dto.liveUrl,
             privacyUrl: dto.privacyUrl,
             termsUrl: dto.termsUrl,
             isFeatured: dto.isFeatured,
@@ -292,18 +339,8 @@ export class ProductsService {
   }
 
   private publicProduct(
-    product: Pick<
-      Product,
-      | 'id'
-      | 'slug'
-      | 'stage'
-      | 'brandColor'
-      | 'productSiteUrl'
-      | 'demoUrl'
-      | 'isFeatured'
-      | 'sortOrder'
-    > & {
-      translations: ProductTranslation[];
+    product: Product & {
+      translations?: ProductTranslation[];
     },
     locales: string[],
     selected?: ProductTranslation,
@@ -311,31 +348,57 @@ export class ProductsService {
     const translation =
       selected ??
       locales
-        .map((locale) => product.translations.find((item) => item.locale === locale))
-        .find(Boolean);
-    if (!translation) throw new NotFoundException('Product not found');
+        .map((locale) => product.translations?.find((item) => item.locale === locale))
+        .find(Boolean) ??
+      product.translations?.[0];
+
+    const title = product.title || translation?.name || product.slug;
+    const tagline = product.tagline || translation?.tagline || '';
+    const description = product.description || translation?.summary || '';
+
     return {
       id: product.id,
       slug: product.slug,
       stage: product.stage,
+      title,
+      name: title,
+      tagline,
+      description,
+      summary: description,
+      images: product.images || [],
+      liveUrl: product.liveUrl || product.productSiteUrl || product.demoUrl || null,
+      caseStudy: product.caseStudy || null,
+      sourceCodeUrl: product.sourceCodeUrl || null,
+      isSourcePrivate: product.isSourcePrivate ?? false,
       brandColor: product.brandColor,
       productSiteUrl: product.productSiteUrl,
       demoUrl: product.demoUrl,
       isFeatured: product.isFeatured,
       sortOrder: product.sortOrder,
-      name: translation.name,
-      tagline: translation.tagline,
-      summary: translation.summary,
-      body: translation.body,
-      publishedAt: translation.publishedAt,
+      body: translation?.body ?? {},
+      publishedAt: translation?.publishedAt ?? product.createdAt,
     };
   }
 
   private toAdmin(product: Prisma.ProductGetPayload<{ include: { translations: true } }>) {
+    const title = product.title || product.translations?.[0]?.name || product.slug;
+    const tagline = product.tagline || product.translations?.[0]?.tagline || '';
+    const description = product.description || product.translations?.[0]?.summary || '';
+
     return {
       id: product.id,
       slug: product.slug,
       stage: product.stage,
+      title,
+      name: title,
+      tagline,
+      description,
+      summary: description,
+      images: product.images || [],
+      liveUrl: product.liveUrl || product.productSiteUrl || product.demoUrl || '',
+      caseStudy: product.caseStudy || '',
+      sourceCodeUrl: product.sourceCodeUrl || '',
+      isSourcePrivate: product.isSourcePrivate ?? false,
       logoId: product.logoId,
       heroImageId: product.heroImageId,
       brandColor: product.brandColor,

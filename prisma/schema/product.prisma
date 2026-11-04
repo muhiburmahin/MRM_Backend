@@ -2,6 +2,14 @@ model Product {
   id             String      @id @default(uuid()) @db.Uuid
   slug           String      @unique // edumanage-bd, medisheba-bd
   stage          LaunchStage @default(LIVE)
+  title          String?
+  tagline        String?
+  description    String?     @db.Text
+  images         String[]    @default([])
+  liveUrl        String?
+  caseStudy      String?     @db.Text
+  sourceCodeUrl  String?
+  isSourcePrivate Boolean    @default(false)
   logoId         String?     @db.Uuid // -> MediaAsset.id
   heroImageId    String?     @db.Uuid // -> MediaAsset.id
   brandColor     String? // product accent (hex), shown on cards

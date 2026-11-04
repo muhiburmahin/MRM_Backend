@@ -12,6 +12,7 @@ enum LaunchStage {
   LIVE
   BETA
   PLANNED
+  COMING_SOON
 }
 
 enum LeadType {

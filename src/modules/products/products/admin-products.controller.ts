@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -44,6 +45,7 @@ export class AdminProductsController {
   }
 
   @Patch(':id')
+  @Put(':id')
   @Permissions('product:write')
   update(
     @Param('id', ParseUUIDPipe) id: string,

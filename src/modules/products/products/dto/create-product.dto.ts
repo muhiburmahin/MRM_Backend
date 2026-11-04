@@ -18,7 +18,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-const LAUNCH_STAGES = ['LIVE', 'BETA', 'PLANNED'] as const;
+const LAUNCH_STAGES = ['LIVE', 'BETA', 'PLANNED', 'COMING_SOON'] as const;
 const CONTENT_STATUSES = ['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'] as const;
 
 export class ProductTranslationDto {
@@ -90,6 +90,51 @@ export class CreateProductDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  tagline?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  liveUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  caseStudy?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  sourceCodeUrl?: string;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  isSourcePrivate?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
   logoId?: string;
 
@@ -146,9 +191,10 @@ export class CreateProductDto {
   @IsDate()
   launchedAt?: Date;
 
-  @ApiProperty({ type: [ProductTranslationDto], minItems: 1 })
+  @ApiPropertyOptional({ type: [ProductTranslationDto] })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductTranslationDto)
-  translations: ProductTranslationDto[];
+  translations?: ProductTranslationDto[];
 }
