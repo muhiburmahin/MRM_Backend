@@ -32,15 +32,15 @@ export class QueryProductDto {
   @MaxLength(10)
   locale: string = 'en';
 
-  @ApiPropertyOptional({ enum: PRODUCT_SORT_FIELDS, default: 'createdAt' })
+  @ApiPropertyOptional({ enum: PRODUCT_SORT_FIELDS, default: 'sortOrder' })
   @IsOptional()
   @IsIn(PRODUCT_SORT_FIELDS)
-  sortBy: (typeof PRODUCT_SORT_FIELDS)[number] = 'createdAt';
+  sortBy: (typeof PRODUCT_SORT_FIELDS)[number] = 'sortOrder';
 
-  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'asc' })
   @IsOptional()
   @IsIn(['asc', 'desc'])
-  order: 'asc' | 'desc' = 'desc';
+  order: 'asc' | 'desc' = 'asc';
 }
 
 /** Admin-only extra filter. Public queries use QueryProductDto, so isPublished cannot be overridden there. */

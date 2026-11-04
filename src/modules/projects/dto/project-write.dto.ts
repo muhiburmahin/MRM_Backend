@@ -143,6 +143,11 @@ class ProjectFieldsDto {
   @IsMetrics()
   metrics?: Metric[];
 
+  @ApiPropertyOptional({ example: 'https://client-project.com', nullable: true })
+  @IsOptional()
+  @IsString()
+  liveUrl?: string | null;
+
   @ApiPropertyOptional({ default: 0 })
   @IsOptional()
   @IsInt()
@@ -248,13 +253,30 @@ export class CreateProjectDto extends ProjectFieldsDto {
   @MaxLength(80)
   slug!: string;
 
-  @ApiProperty({ type: [CreateProjectTranslationDto] })
+  @ApiPropertyOptional({ example: 'Next.js School ERP Portal' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'Enterprise school management architecture' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  summary?: string;
+
+  @ApiPropertyOptional({ example: 'PUBLISHED', default: 'PUBLISHED' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional({ type: [CreateProjectTranslationDto] })
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(10)
   @ValidateNested({ each: true })
   @Type(() => CreateProjectTranslationDto)
-  translations!: CreateProjectTranslationDto[];
+  translations?: CreateProjectTranslationDto[];
 }
 
 export class UpdateProjectDto extends ProjectFieldsDto {
@@ -264,6 +286,23 @@ export class UpdateProjectDto extends ProjectFieldsDto {
   @Matches(SLUG_RE)
   @MaxLength(80)
   slug?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Trim()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Trim()
+  @IsString()
+  summary?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
 
   @ApiPropertyOptional({ type: [UpsertProjectTranslationDto] })
   @IsOptional()

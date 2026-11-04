@@ -9,9 +9,19 @@ import {
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { PrismaService } from '../../database/prisma.service';
 import { AdminQueryProjectsDto, QueryProjectsDto } from './dto/query-projects.dto';
-import { CreateProjectDto, UpdateProjectDto } from './dto/project-write.dto';
+import {
+  CreateProjectDto,
+  CreateProjectTranslationDto,
+  UpdateProjectDto,
+  UpsertProjectTranslationDto,
+} from './dto/project-write.dto';
 import { isMetricList } from './dto/validators';
-import { EVIDENCE_NOTE_MIN, PROJECT_PERMISSIONS, SortOrder } from './projects.constants';
+import {
+  EVIDENCE_NOTE_MIN,
+  PROJECT_PERMISSIONS,
+  SortOrder,
+  WritableStatus,
+} from './projects.constants';
 import { sanitizePublicProjectRepoLinks, visibility } from './projects.visibility';
 
 const PUBLISHED = 'PUBLISHED' as const;
@@ -237,7 +247,18 @@ export class ProjectsService {
   }
 
   async create(dto: CreateProjectDto, actor: AuthenticatedUser) {
-    const locales = dto.translations.map((t) => t.locale);
+    const rawTranslations: CreateProjectTranslationDto[] =
+      dto.translations && dto.translations.length > 0
+        ? dto.translations
+        : [
+            {
+              locale: 'en',
+              title: dto.title || dto.slug,
+              summary: dto.summary || dto.title || dto.slug,
+              status: (dto.status as WritableStatus) || 'PUBLISHED',
+            },
+          ];
+    const locales = rawTranslations.map((t) => t.locale);
     this.assertUnique(locales);
     await this.assertLocalesEnabled(locales);
     await this.assertCoverExists(dto.coverId);
@@ -248,7 +269,7 @@ export class ProjectsService {
       clientApprovedAt: dto.clientApprovedAt ?? null,
     });
 
-    const publishing = dto.translations.some((t) => t.status === PUBLISHED);
+    const publishing = rawTranslations.some((t) => t.status === PUBLISHED);
     const trustFields = this.touchesTrust(dto);
     if (publishing || trustFields) this.requirePublish(actor);
 
@@ -261,6 +282,7 @@ export class ProjectsService {
           serviceId: dto.serviceId ?? null,
           industryId: dto.industryId ?? null,
           coverId: dto.coverId ?? null,
+          liveUrl: dto.liveUrl ?? null,
           metrics: asJson(dto.metrics ?? []),
           isVerified: dto.isVerified ?? false,
           evidenceNote: dto.evidenceNote ?? null,
@@ -281,7 +303,7 @@ export class ProjectsService {
             dto.backendTechSummary !== undefined ? asJson(dto.backendTechSummary) : undefined,
           dbToolsSummary: dto.dbToolsSummary !== undefined ? asJson(dto.dbToolsSummary) : undefined,
           translations: {
-            create: dto.translations.map((t) => ({
+            create: rawTranslations.map((t) => ({
               locale: t.locale,
               title: t.title,
               summary: t.summary,
@@ -324,7 +346,19 @@ export class ProjectsService {
     });
     if (!cur) throw new NotFoundException('Project not found');
 
-    const incoming = dto.translations ?? [];
+    const incoming: UpsertProjectTranslationDto[] =
+      dto.translations && dto.translations.length > 0
+        ? dto.translations
+        : dto.title || dto.summary
+          ? [
+              {
+                locale: 'en',
+                title: dto.title,
+                summary: dto.summary,
+                status: (dto.status as WritableStatus) || undefined,
+              } as UpsertProjectTranslationDto,
+            ]
+          : [];
     const locales = incoming.map((t) => t.locale);
     this.assertUnique(locales);
     await this.assertLocalesEnabled(locales);
@@ -371,6 +405,7 @@ export class ProjectsService {
             ...(dto.serviceId !== undefined ? { serviceId: dto.serviceId } : {}),
             ...(dto.industryId !== undefined ? { industryId: dto.industryId } : {}),
             ...(dto.coverId !== undefined ? { coverId: dto.coverId } : {}),
+            ...(dto.liveUrl !== undefined ? { liveUrl: dto.liveUrl } : {}),
             ...(dto.metrics !== undefined ? { metrics: asJson(dto.metrics) } : {}),
             ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
             ...(dto.projectWorkStatus !== undefined
