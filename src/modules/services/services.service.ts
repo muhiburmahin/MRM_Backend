@@ -9,9 +9,13 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { AdminQueryServicesDto, QueryServicesDto } from './dto/query-services.dto';
-import { CreateServiceDto } from './dto/service-write.dto';
-import { UpdateServiceDto } from './dto/service-write.dto';
-import { SERVICE_PERMISSIONS, SortOrder } from './services.constants';
+import {
+  CreateServiceDto,
+  CreateServiceTranslationDto,
+  UpdateServiceDto,
+  UpsertServiceTranslationDto,
+} from './dto/service-write.dto';
+import { SERVICE_PERMISSIONS, SortOrder, WritableStatus } from './services.constants';
 
 const PUBLISHED = 'PUBLISHED' as const;
 const FALLBACK_LOCALE = 'en';
@@ -187,6 +191,29 @@ export class ServicesService {
   }
 
   async create(dto: CreateServiceDto, actor: AuthenticatedUser) {
+    if (dto.order !== undefined && dto.sortOrder === undefined) {
+      dto.sortOrder = dto.order;
+    }
+    if (dto.isPublished !== undefined && dto.isActive === undefined) {
+      dto.isActive = dto.isPublished;
+    }
+
+    if (!dto.translations || dto.translations.length === 0) {
+      const svcName = dto.title || dto.name || dto.slug;
+      const svcSummary = dto.summary || '';
+      const svcBody = dto.description ? { content: dto.description } : {};
+      const isPub = dto.isPublished !== undefined ? dto.isPublished : dto.isActive !== false;
+      dto.translations = [
+        {
+          locale: 'en',
+          name: svcName,
+          summary: svcSummary,
+          body: svcBody,
+          status: isPub ? PUBLISHED : 'DRAFT',
+        } as CreateServiceTranslationDto,
+      ];
+    }
+
     const locales = dto.translations.map((t) => t.locale);
     this.assertUnique(locales);
     await this.assertLocalesEnabled(locales);
@@ -222,6 +249,44 @@ export class ServicesService {
   }
 
   async update(id: string, dto: UpdateServiceDto, actor: AuthenticatedUser) {
+    if (dto.order !== undefined && dto.sortOrder === undefined) {
+      dto.sortOrder = dto.order;
+    }
+    if (dto.isPublished !== undefined && dto.isActive === undefined) {
+      dto.isActive = dto.isPublished;
+    }
+
+    const isOnlySortOrder = Object.keys(dto).every(
+      (k) => k === 'sortOrder' || k === 'order',
+    );
+
+    if (!dto.translations || dto.translations.length === 0) {
+      if (
+        dto.title !== undefined ||
+        dto.name !== undefined ||
+        dto.summary !== undefined ||
+        dto.description !== undefined ||
+        dto.isPublished !== undefined ||
+        dto.status !== undefined
+      ) {
+        const svcName = dto.title || dto.name;
+        const svcSummary = dto.summary;
+        const svcBody = dto.description !== undefined ? { content: dto.description } : undefined;
+        const statusVal =
+          dto.status ||
+          (dto.isPublished !== undefined ? (dto.isPublished ? PUBLISHED : 'DRAFT') : undefined);
+        dto.translations = [
+          {
+            locale: 'en',
+            ...(svcName !== undefined ? { name: svcName } : {}),
+            ...(svcSummary !== undefined ? { summary: svcSummary } : {}),
+            ...(svcBody !== undefined ? { body: svcBody } : {}),
+            ...(statusVal !== undefined ? { status: statusVal as WritableStatus } : {}),
+          } as UpsertServiceTranslationDto,
+        ];
+      }
+    }
+
     const existing = await this.prisma.service.findUnique({
       where: { id },
       select: {
@@ -253,8 +318,11 @@ export class ServicesService {
       (dto.slug !== undefined && dto.slug !== existing.slug) ||
       (dto.isActive !== undefined && dto.isActive !== existing.isActive);
     const touchesLive =
-      (serviceLevelChange && hasLive) ||
-      incoming.some((t) => t.status === PUBLISHED || byLocale.get(t.locale)?.status === PUBLISHED);
+      !isOnlySortOrder &&
+      ((serviceLevelChange && hasLive) ||
+        incoming.some(
+          (t) => t.status === PUBLISHED || byLocale.get(t.locale)?.status === PUBLISHED,
+        ));
     if (touchesLive) this.requirePublish(actor);
 
     try {

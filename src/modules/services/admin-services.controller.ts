@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -67,6 +68,7 @@ export class AdminServicesController {
     return this.services.create(dto, actor);
   }
 
+  @Put(':id')
   @Patch(':id')
   @Permissions(P.write)
   @ApiOperation({ summary: 'Partial update; translations are upserted by locale' })

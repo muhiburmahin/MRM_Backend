@@ -80,6 +80,30 @@ export class CreateServiceDto {
   @MaxLength(80)
   slug!: string;
 
+  @ApiPropertyOptional({ example: 'Custom Software Development' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'Custom Software Development' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({ example: 'Tailor-made software solutions designed to solve complex business problems.' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  summary?: string;
+
+  @ApiPropertyOptional({ example: 'Full lifecycle software engineering tailored to your business needs.' })
+  @IsOptional()
+  @Trim()
+  @IsString()
+  description?: string;
+
   @ApiPropertyOptional({
     maxLength: 60,
     nullable: true,
@@ -98,21 +122,38 @@ export class CreateServiceDto {
   @Max(100_000)
   sortOrder?: number;
 
+  @ApiPropertyOptional({ default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  order?: number;
+
   @ApiPropertyOptional({ default: true })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiProperty({
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
+
+  @ApiPropertyOptional({ example: 'PUBLISHED', default: 'PUBLISHED' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional({
     type: [CreateServiceTranslationDto],
-    description: 'At least one translation; one per locale',
+    description: 'Translations; optional when title/summary are supplied directly',
   })
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayMaxSize(10)
   @ValidateNested({ each: true })
   @Type(() => CreateServiceTranslationDto)
-  translations!: CreateServiceTranslationDto[];
+  translations?: CreateServiceTranslationDto[];
 }
 
 /** Upsert by locale: `name` and `summary` are required only when the locale does not exist yet. */
@@ -171,6 +212,30 @@ export class UpdateServiceDto {
   @MaxLength(80)
   slug?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Trim()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Trim()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Trim()
+  @IsString()
+  summary?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Trim()
+  @IsString()
+  description?: string;
+
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()
   @Trim()
@@ -187,8 +252,25 @@ export class UpdateServiceDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100_000)
+  order?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
 
   @ApiPropertyOptional({ type: [UpsertServiceTranslationDto] })
   @IsOptional()
