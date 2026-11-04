@@ -38,6 +38,13 @@ export class UpdateCompanyDto {
   @Length(2, 150)
   name?: string;
 
+  @ApiPropertyOptional({ nullable: true, example: 'MRM InfoTech Ltd.' })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(200)
+  legalName?: string | null;
+
   @ApiPropertyOptional({ nullable: true, example: 'Technology that grows your business' })
   @IsOptional()
   @Transform(trim)
@@ -73,11 +80,24 @@ export class UpdateCompanyDto {
   @MaxLength(254)
   email?: string | null;
 
+  @ApiPropertyOptional({ nullable: true, example: 'support@example.com' })
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @IsEmail()
+  @MaxLength(254)
+  supportEmail?: string | null;
+
   @ApiPropertyOptional({ nullable: true, example: '+8801700000000' })
   @IsOptional()
   @Transform(trim)
   @Matches(/^\+?[0-9\s\-()]{6,20}$/, { message: 'phone must be a valid phone number' })
   phone?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: '+8801700000000' })
+  @IsOptional()
+  @Transform(trim)
+  @Matches(/^\+?[0-9\s\-()]{6,20}$/, { message: 'whatsapp must be a valid phone number' })
+  whatsapp?: string | null;
 
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()
@@ -106,6 +126,41 @@ export class UpdateCompanyDto {
   @IsUrl(URL_OPTS)
   @MaxLength(300)
   linkedinUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @Transform(trim)
+  @IsUrl(URL_OPTS)
+  @MaxLength(300)
+  twitterUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @Transform(trim)
+  @IsUrl(URL_OPTS)
+  @MaxLength(300)
+  instagramUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @Transform(trim)
+  @IsUrl(URL_OPTS)
+  @MaxLength(300)
+  githubUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @Transform(trim)
+  @IsUrl(URL_OPTS)
+  @MaxLength(300)
+  youtubeUrl?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, example: '© 2026 MRM InfoTech Ltd. All rights reserved.' })
+  @IsOptional()
+  @Transform(trim)
+  @IsString()
+  @MaxLength(300)
+  copyrightText?: string | null;
 
   @ApiPropertyOptional({ nullable: true, example: 2015 })
   @IsOptional()
