@@ -24,7 +24,7 @@ export const CONTENT_STATUSES = ['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED',
 export class ProductMediaItemDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @ApiProperty()
@@ -82,7 +82,7 @@ export class ProductMediaItemDto {
 export class ProductFeatureItemDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @ApiPropertyOptional()
@@ -139,7 +139,7 @@ export class ProductFeatureItemDto {
 export class ProductBenefitItemDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @ApiProperty()
@@ -176,7 +176,7 @@ export class ProductBenefitItemDto {
 export class ProductLinkItemDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @ApiPropertyOptional()
@@ -228,7 +228,7 @@ export class ProductLinkItemDto {
 export class ProductDemoItemDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @ApiPropertyOptional()
@@ -275,7 +275,7 @@ export class ProductDemoItemDto {
 export class ProductFaqItemDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @ApiPropertyOptional()
