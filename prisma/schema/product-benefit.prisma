@@ -9,3 +9,4 @@ model ProductBenefit {
 
   @@index([productId, displayOrder])
 }
+

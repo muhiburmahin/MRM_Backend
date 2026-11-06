@@ -34,3 +34,4 @@ export class ReorderProductsDto {
   @Type(() => ReorderItemDto)
   items: ReorderItemDto[];
 }
+

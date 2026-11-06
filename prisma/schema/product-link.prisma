@@ -12,3 +12,4 @@ model ProductLink {
 
   @@index([productId, displayOrder])
 }
+

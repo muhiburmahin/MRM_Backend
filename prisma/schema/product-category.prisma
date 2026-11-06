@@ -12,3 +12,4 @@ model ProductCategory {
 
   @@index([isActive, displayOrder])
 }
+

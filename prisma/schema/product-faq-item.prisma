@@ -8,3 +8,4 @@ model ProductFaqItem {
 
   @@index([productId, displayOrder])
 }
+
