@@ -119,6 +119,24 @@ export class ContactService {
     const datePart = timestamp.toISOString().slice(0, 10).replace(/-/g, '');
     const ref = `LD-${datePart}-${randomBytes(6).toString('hex').toUpperCase()}`;
 
+    let serviceId: string | undefined = undefined;
+    if (dto.serviceInterested) {
+      try {
+        const matchedService = await this.prisma.service.findFirst({
+          where: {
+            OR: [
+              { slug: dto.serviceInterested },
+              { id: dto.serviceInterested.length === 36 ? dto.serviceInterested : undefined },
+            ],
+          },
+          select: { id: true },
+        });
+        if (matchedService) serviceId = matchedService.id;
+      } catch {
+        // Continue even if lookup fails
+      }
+    }
+
     try {
       await this.prisma.lead.create({
         data: {
@@ -130,6 +148,7 @@ export class ContactService {
           phone: dto.phone ?? null,
           company: dto.company ?? null,
           message: dto.message,
+          serviceId,
           payload: {
             serviceInterested: dto.serviceInterested ?? null,
             budgetRange: dto.budgetRange ?? null,

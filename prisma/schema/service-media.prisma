@@ -1,0 +1,19 @@
+model ServiceMediaItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  serviceId    String   @db.Uuid
+  service      Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  url          String
+  videoUrl     String?
+  mediaType    String   @default("SCREENSHOT") // SCREENSHOT, COVER, INTERFACE, DIAGRAM, VIDEO
+  title        String?
+  caption      String?
+  altText      String?
+  description  String?  @db.Text
+  isCover      Boolean  @default(false)
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([serviceId, displayOrder])
+}
+

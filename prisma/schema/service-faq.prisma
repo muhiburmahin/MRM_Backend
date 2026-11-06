@@ -1,0 +1,12 @@
+model ServiceFaqItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  serviceId    String   @db.Uuid
+  service      Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  question     String   @db.Text
+  answer       String   @db.Text
+  displayOrder Int      @default(0)
+  isVisible    Boolean  @default(true)
+
+  @@index([serviceId, displayOrder])
+}
+

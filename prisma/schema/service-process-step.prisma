@@ -1,0 +1,13 @@
+model ServiceProcessStepItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  serviceId    String   @db.Uuid
+  service      Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  stepNumber   Int      @default(1)
+  title        String
+  description  String   @db.Text
+  icon         String?
+  displayOrder Int      @default(0)
+
+  @@index([serviceId, displayOrder])
+}
+

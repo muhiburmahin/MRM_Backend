@@ -61,6 +61,16 @@ export class QueryServicesDto extends ServiceLocaleQueryDto {
   @IsString()
   @MaxLength(100)
   q?: string;
+
+  @ApiPropertyOptional({ enum: ['catalog', 'homepage', 'nav'], description: 'Frontend placement context' })
+  @IsOptional()
+  @IsIn(['catalog', 'homepage', 'nav'])
+  placement?: 'catalog' | 'homepage' | 'nav';
+
+  @ApiPropertyOptional({ description: 'Filter by category slug' })
+  @IsOptional()
+  @IsString()
+  category?: string;
 }
 
 export class AdminQueryServicesDto {
@@ -72,13 +82,13 @@ export class AdminQueryServicesDto {
   @Max(10_000)
   page: number = 1;
 
-  @ApiPropertyOptional({ default: 20, maximum: 100 })
+  @ApiPropertyOptional({ default: 50, maximum: 100 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number = 20;
+  limit: number = 50;
 
   @ApiPropertyOptional({ enum: ADMIN_SORT_FIELDS, default: 'sortOrder' })
   @IsOptional()
@@ -96,6 +106,16 @@ export class AdminQueryServicesDto {
   @IsString()
   @MaxLength(100)
   q?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by category slug or ID' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by featured flag' })
+  @IsOptional()
+  @ToBoolean()
+  isFeatured?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
