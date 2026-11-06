@@ -1,35 +1,93 @@
 model Product {
-  id             String      @id @default(uuid()) @db.Uuid
-  slug           String      @unique // edumanage-bd, medisheba-bd
-  stage          LaunchStage @default(LIVE)
-  title          String?
-  tagline        String?
-  description    String?     @db.Text
-  images         String[]    @default([])
-  liveUrl        String?
-  caseStudy      String?     @db.Text
-  sourceCodeUrl  String?
-  isSourcePrivate Boolean    @default(false)
-  logoId         String?     @db.Uuid // -> MediaAsset.id
-  heroImageId    String?     @db.Uuid // -> MediaAsset.id
-  brandColor     String? // product accent (hex), shown on cards
-  productSiteUrl String?
-  demoUrl        String?
-  privacyUrl     String?
-  termsUrl       String?
-  isFeatured     Boolean     @default(false)
-  sortOrder      Int         @default(0)
-  launchedAt     DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id                  String               @id @default(uuid()) @db.Uuid
+  slug                String               @unique // edumanage-bd, medisheba-bd
+  stage               LaunchStage          @default(LIVE)
+  status              ContentStatus        @default(PUBLISHED)
+  title               String?
+  tagline             String?
+  shortDescription    String?              @db.Text
+  description         String?              @db.Text
+  targetAudience      String?              @db.Text
+  problemsAddressed   String?              @db.Text
+  mainPurpose         String?              @db.Text
+  productType         String               @default("SaaS") // SaaS, ERP, CRM, Website Platform, etc.
+  version             String?
+  launchedAt          DateTime?
+  brandColor          String? // product accent (hex), shown on cards
+  logoUrl             String?
+  thumbnailUrl        String?
 
-  translations ProductTranslation[]
-  features     ProductFeature[]
-  screenshots  ProductScreenshot[]
-  plans        PricingPlan[]
-  industries   ProductIndustry[]
-  faqs         Faq[]
-  leads        Lead[]
-  caseStudies  CaseStudy[]
-  navItems     NavItem[]
+  // Legacy fields kept intact for 100% backward safety
+  images              String[]             @default([])
+  liveUrl             String?
+  caseStudy           String?              @db.Text
+  sourceCodeUrl       String?
+  isSourcePrivate     Boolean              @default(false)
+  logoId              String?              @db.Uuid // -> MediaAsset.id
+  heroImageId         String?              @db.Uuid // -> MediaAsset.id
+  productSiteUrl      String?
+  demoUrl             String?
+  privacyUrl          String?
+  termsUrl            String?
+  integrations        String[]             @default([])
+
+  // Independent Visibility & Section Toggles
+  isFeatured          Boolean              @default(false)
+  showOnHomepage      Boolean              @default(true)
+  showOnProductsPage  Boolean              @default(true)
+  showInNavDropdown   Boolean              @default(true)
+  allowPublicDetail   Boolean              @default(true)
+  enableGallery       Boolean              @default(true)
+  enableCaseStudies   Boolean              @default(true)
+  enableDemos         Boolean              @default(true)
+  enableFaq           Boolean              @default(true)
+
+  // Multi-Context Display Ordering
+  sortOrder           Int                  @default(0) // Legacy priority
+  displayOrder        Int                  @default(0) // Products Page
+  homepageOrder       Int                  @default(0) // Homepage
+  navOrder            Int                  @default(0) // Navbar
+  featuredOrder       Int                  @default(0) // Featured Banner
+
+  // Independent SEO Metadata
+  seoTitle            String?
+  seoDescription      String?              @db.Text
+  seoKeywords         String?
+  canonicalUrl        String?
+  ogTitle             String?
+  ogDescription       String?              @db.Text
+  ogImage             String?
+  twitterImage        String?
+  noIndex             Boolean              @default(false)
+  includeInSitemap    Boolean              @default(true)
+
+  // Category relation
+  categoryId          String?              @db.Uuid
+  category            ProductCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Rich sub-collections
+  mediaItems          ProductMediaItem[]
+  richFeatures        ProductFeatureItem[]
+  benefits            ProductBenefit[]
+  links               ProductLink[]
+  demonstrations      ProductDemonstration[]
+  productFaqs         ProductFaqItem[]
+
+  // Existing Relations Preserved
+  translations        ProductTranslation[]
+  features            ProductFeature[]     // legacy relation
+  screenshots         ProductScreenshot[]  // legacy relation
+  plans               PricingPlan[]
+  industries          ProductIndustry[]
+  faqs                Faq[]                // legacy FAQ relation
+  leads               Lead[]
+  caseStudies         CaseStudy[]
+  navItems            NavItem[]
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([status, displayOrder])
+  @@index([showOnHomepage, homepageOrder])
+  @@index([showInNavDropdown, navOrder])
 }

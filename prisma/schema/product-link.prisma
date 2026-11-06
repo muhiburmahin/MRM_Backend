@@ -1,0 +1,14 @@
+model ProductLink {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @db.Uuid
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title        String
+  url          String
+  linkType     String   @default("OFFICIAL_WEBSITE") // OFFICIAL_WEBSITE, LIVE_DEMO, REQUEST_DEMO, DOCUMENTATION, USER_GUIDE, SUPPORT_PORTAL, LOGIN_PORTAL, ANDROID_APP, IOS_APP, VIDEO_DEMO, GITHUB_REPO, CUSTOM
+  icon         String?
+  openInNewTab Boolean  @default(true)
+  isVisible    Boolean  @default(true)
+  displayOrder Int      @default(0)
+
+  @@index([productId, displayOrder])
+}

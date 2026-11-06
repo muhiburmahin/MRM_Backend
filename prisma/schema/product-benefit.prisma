@@ -1,0 +1,11 @@
+model ProductBenefit {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @db.Uuid
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title        String
+  description  String   @db.Text
+  icon         String?
+  displayOrder Int      @default(0)
+
+  @@index([productId, displayOrder])
+}
