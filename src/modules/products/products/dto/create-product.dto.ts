@@ -101,9 +101,15 @@ export class ProductFeatureItemDto {
   @IsString()
   title: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  shortDescription: string;
+  shortDescription?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

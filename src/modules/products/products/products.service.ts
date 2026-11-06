@@ -425,7 +425,7 @@ export class ProductsService {
             data: dto.richFeatures.map((f, idx) => ({
               productId: created.id,
               title: f.title,
-              shortDescription: f.shortDescription,
+              shortDescription: f.shortDescription || (f as any).description || '',
               detailedDescription: f.detailedDescription,
               icon: f.icon,
               imageUrl: f.imageUrl,
@@ -607,7 +607,7 @@ export class ProductsService {
               data: dto.richFeatures.map((f, idx) => ({
                 productId: id,
                 title: f.title,
-                shortDescription: f.shortDescription,
+                shortDescription: f.shortDescription || (f as any).description || '',
                 detailedDescription: f.detailedDescription,
                 icon: f.icon,
                 imageUrl: f.imageUrl,
@@ -764,7 +764,7 @@ export class ProductsService {
                 data: items.map((f: any, idx: number) => ({
                   productId: id,
                   title: f.title,
-                  shortDescription: f.shortDescription,
+                  shortDescription: f.shortDescription || (f as any).description || '',
                   detailedDescription: f.detailedDescription,
                   icon: f.icon,
                   imageUrl: f.imageUrl,
