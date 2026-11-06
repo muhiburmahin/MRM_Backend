@@ -308,6 +308,13 @@ export class ProductsService {
 
   /** Create new product (supports quick creation with just title/slug) */
   async create(dto: CreateProductDto, actor: AuthenticatedUser) {
+    if (dto.features && !dto.richFeatures) {
+      dto.richFeatures = dto.features;
+    }
+    if (dto.faqs && !dto.productFaqs) {
+      dto.productFaqs = dto.faqs;
+    }
+
     const hasExplicitTranslations = Boolean(dto.translations && dto.translations.length > 0);
     const translations = hasExplicitTranslations
       ? await this.translationsData(dto.translations!, actor)
@@ -492,6 +499,13 @@ export class ProductsService {
 
   /** Update complete product */
   async update(id: string, dto: UpdateProductDto, actor: AuthenticatedUser) {
+    if (dto.features && !dto.richFeatures) {
+      dto.richFeatures = dto.features;
+    }
+    if (dto.faqs && !dto.productFaqs) {
+      dto.productFaqs = dto.faqs;
+    }
+
     const existing = await this.findOneAdmin(id);
 
     if (
@@ -1222,11 +1236,15 @@ export class ProductsService {
       faqs: product.productFaqs || [],
       caseStudies: product.caseStudies || [],
       liveUrl: product.liveUrl || product.productSiteUrl || product.demoUrl || null,
-      isFeatured: product.isFeatured,
-      enableGallery: product.enableGallery,
-      enableCaseStudies: product.enableCaseStudies,
-      enableDemos: product.enableDemos,
-      enableFaq: product.enableFaq,
+      isFeatured: product.isFeatured ?? false,
+      allowPublicDetail: product.allowPublicDetail ?? true,
+      showOnProductsPage: product.showOnProductsPage ?? true,
+      showInNavDropdown: product.showInNavDropdown ?? true,
+      showOnHomepage: product.showOnHomepage ?? true,
+      enableGallery: product.enableGallery ?? true,
+      enableCaseStudies: product.enableCaseStudies ?? true,
+      enableDemos: product.enableDemos ?? true,
+      enableFaq: product.enableFaq ?? true,
       seo: {
         seoTitle: product.seoTitle || title,
         seoDescription: product.seoDescription || product.shortDescription || description,

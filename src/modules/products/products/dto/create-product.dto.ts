@@ -65,6 +65,18 @@ export class ProductMediaItemDto {
   @IsOptional()
   @IsInt()
   displayOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
 }
 
 export class ProductFeatureItemDto {
@@ -72,6 +84,18 @@ export class ProductFeatureItemDto {
   @IsOptional()
   @IsUUID()
   id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
 
   @ApiProperty()
   @IsString()
@@ -135,6 +159,18 @@ export class ProductBenefitItemDto {
   @IsOptional()
   @IsInt()
   displayOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
 }
 
 export class ProductLinkItemDto {
@@ -142,6 +178,18 @@ export class ProductLinkItemDto {
   @IsOptional()
   @IsUUID()
   id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
 
   @ApiProperty()
   @IsString()
@@ -183,6 +231,18 @@ export class ProductDemoItemDto {
   @IsUUID()
   id?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
+
   @ApiProperty()
   @IsString()
   title: string;
@@ -217,6 +277,18 @@ export class ProductFaqItemDto {
   @IsOptional()
   @IsUUID()
   id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
 
   @ApiProperty()
   @IsString()
@@ -287,6 +359,38 @@ export class ProductTranslationDto {
 }
 
 export class CreateProductDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  categoryName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  category?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  features?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  faqs?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  seo?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  createdAt?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: any;
+
   @ApiProperty({ example: 'edumanage-bd' })
   @IsString()
   @Length(2, 150)
