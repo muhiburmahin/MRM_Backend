@@ -45,6 +45,24 @@ describe('configureApp', () => {
     });
     expect(vercelAllowed).toBe(true);
 
+    let mrmAllowed: boolean | undefined;
+    originFn('https://mrminfotech.com', (_err, ok) => {
+      mrmAllowed = ok;
+    });
+    expect(mrmAllowed).toBe(true);
+
+    let wwwAllowed: boolean | undefined;
+    originFn('https://www.mrminfotech.com', (_err, ok) => {
+      wwwAllowed = ok;
+    });
+    expect(wwwAllowed).toBe(true);
+
+    let defaultVercelAllowed: boolean | undefined;
+    originFn('https://mrminfotech-frontend.vercel.app', (_err, ok) => {
+      defaultVercelAllowed = ok;
+    });
+    expect(defaultVercelAllowed).toBe(true);
+
     let foreignAllowed: boolean | undefined = true;
     originFn('https://malicious-site.com', (_err, ok) => {
       foreignAllowed = ok;

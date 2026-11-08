@@ -50,20 +50,36 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
     ),
   );
 
-  // Configure CORS to allow both production, local, and all Vercel deployments (*.vercel.app)
+  // Configure CORS to allow production custom domains, Vercel preview deployments, and local development
+  const parseOrigins = (val: string | undefined): string[] => {
+    if (!val) return [];
+    return val
+      .split(',')
+      .map((s) => s.trim().replace(/\/$/, ''))
+      .filter(Boolean);
+  };
+
+  const hardcodedOrigins = [
+    'https://mrminfotech.com',
+    'https://www.mrminfotech.com',
+    'https://mrminfotech-frontend.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://localhost:5173',
+  ];
+
   const allowedOrigins = Array.from(
-    new Set(
-      [
-        ...config.corsOrigins,
-        ...config.authAllowedOrigins,
-        process.env.APP_URL,
-        process.env.PROD_APP_URL,
-        process.env.FRONTEND_URL,
-        'http://localhost:3000',
-        'http://localhost:5000',
-        'http://localhost:5173',
-      ].filter((o): o is string => Boolean(o && typeof o === 'string')),
-    ),
+    new Set([
+      ...config.corsOrigins.map((s) => s.trim().replace(/\/$/, '')),
+      ...config.authAllowedOrigins.map((s) => s.trim().replace(/\/$/, '')),
+      ...parseOrigins(process.env.CORS_ORIGIN),
+      ...parseOrigins(process.env.CORS_ORIGINS),
+      ...parseOrigins(process.env.ALLOWED_ORIGINS),
+      ...parseOrigins(process.env.FRONTEND_URL),
+      ...parseOrigins(process.env.APP_URL),
+      ...parseOrigins(process.env.PROD_APP_URL),
+      ...hardcodedOrigins,
+    ]),
   );
 
   app.enableCors({
@@ -71,10 +87,11 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
       // Allow requests with no origin (mobile apps, Postman, curl, server-side fetch)
       if (!origin) return callback(null, true);
 
-      const cleanOrigin = origin.replace(/\/$/, '');
+      const cleanOrigin = origin.trim().replace(/\/$/, '');
       const isAllowed =
         allowedOrigins.includes(cleanOrigin) ||
-        /^https:\/\/.*\.vercel\.app$/.test(cleanOrigin) ||
+        /^https:\/\/(?:[a-zA-Z0-9-]+\.)*vercel\.app$/.test(cleanOrigin) ||
+        /^https:\/\/(?:[a-zA-Z0-9-]+\.)*mrminfotech\.com$/.test(cleanOrigin) ||
         /^http:\/\/localhost(:\d+)?$/.test(cleanOrigin);
 
       if (isAllowed) {
@@ -94,8 +111,9 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
       'x-request-id',
       'x-csrf-token',
     ],
-    exposedHeaders: ['Set-Cookie', 'x-request-id'],
-    maxAge: 600,
+    exposedHeaders: ['Set-Cookie', 'x-request-id', 'X-Request-Id'],
+    optionsSuccessStatus: 204,
+    maxAge: 86400,
   });
 
   app.setGlobalPrefix(API_PREFIX, { exclude: ['/', 'docs'] });

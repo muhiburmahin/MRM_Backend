@@ -30,10 +30,11 @@ export class OriginGuard implements CanActivate {
       if (hasSessionCookie) throw new ForbiddenException('Origin required');
       return true; // non-browser client without a session cookie (e.g. curl login in dev)
     }
-    const origin = originHeader.replace(/\/$/, '');
+    const origin = originHeader.trim().replace(/\/$/, '');
     const isAllowed =
       this.cfg.allowedOrigins.includes(origin) ||
-      /^https:\/\/.*\.vercel\.app$/.test(origin) ||
+      /^https:\/\/(?:[a-zA-Z0-9-]+\.)*vercel\.app$/.test(origin) ||
+      /^https:\/\/(?:[a-zA-Z0-9-]+\.)*mrminfotech\.com$/.test(origin) ||
       /^http:\/\/localhost(:\d+)?$/.test(origin);
 
     if (!isAllowed) {
