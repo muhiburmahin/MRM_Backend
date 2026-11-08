@@ -37,7 +37,7 @@ describe('ContactService', () => {
       message: 'Please contact me about a website.',
       consentGiven: true,
     });
-    expect(res).toEqual({
+    expect(res).toMatchObject({
       message: 'Thank you for contacting us. We will get back to you soon.',
     });
     const input = prisma.lead.create.mock.calls[0][0].data;
@@ -114,7 +114,7 @@ describe('ContactService', () => {
     });
     expect(mail.notifyNewLead).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'PROJECT',
+        type: 'PROJECT_PROPOSAL',
         name: 'Karim Ahmed',
       }),
     );

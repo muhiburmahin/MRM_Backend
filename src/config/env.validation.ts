@@ -137,13 +137,37 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
     throw new Error(`Invalid environment configuration -> ${details}`);
   }
 
-  for (const key of ['APP_TIMEZONE', 'TZ'] as const) {
-    try {
-      new Intl.DateTimeFormat('en-US', { timeZone: env[key] });
-    } catch {
-      throw new Error(`Invalid environment configuration -> ${key}: must be an IANA time zone`);
-    }
+  // Sanitize and validate timezones. In serverless runtime environments (such as Vercel / AWS Lambda),
+  // process.env.TZ is automatically injected as ':UTC' or glibc/POSIX syntax, or may carry quotes.
+  const sanitizeZone = (val: unknown): string => {
+    if (typeof val !== 'string') return '';
+    return val.trim().replace(/^['"]+|['"]+$/g, '').replace(/^:+/, '').trim();
+  };
+
+  const appTz = sanitizeZone(env.APP_TIMEZONE) || 'Asia/Dhaka';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: appTz });
+    env.APP_TIMEZONE = appTz;
+  } catch {
+    throw new Error('Invalid environment configuration -> APP_TIMEZONE: must be an IANA time zone');
   }
+
+  const rawTz = sanitizeZone(env.TZ);
+  if (rawTz) {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: rawTz });
+      env.TZ = rawTz;
+    } catch {
+      // In serverless / Lambda environments with non-standard POSIX TZ or legacy formats, fallback safely
+      env.TZ = env.APP_TIMEZONE;
+    }
+  } else {
+    env.TZ = env.APP_TIMEZONE;
+  }
+
+  // Ensure process.env.TZ is also updated to the clean IANA timezone for runtime consistency
+  process.env.TZ = env.TZ;
+  process.env.APP_TIMEZONE = env.APP_TIMEZONE;
 
   const validateOrigins = (rawOrigins: string, name: string): void => {
     const origins = rawOrigins

@@ -48,4 +48,15 @@ describe('validateEnv', () => {
       /AUTH_ALLOWED_ORIGINS/,
     );
   });
+
+  it('normalizes Vercel / AWS Lambda :UTC and quoted timezones safely', () => {
+    const envLambda = validateEnv({ ...base, TZ: ':UTC' });
+    expect(envLambda.TZ).toBe('UTC');
+
+    const envQuoted = validateEnv({ ...base, TZ: '"Asia/Dhaka"' });
+    expect(envQuoted.TZ).toBe('Asia/Dhaka');
+
+    const envInvalidTz = validateEnv({ ...base, TZ: 'invalid-platform-tz' });
+    expect(envInvalidTz.TZ).toBe('Asia/Dhaka');
+  });
 });

@@ -39,7 +39,11 @@ export class MailService {
       return false;
     }
 
-    const recipient = this.cfg.notifyRecipient || 'contact.mrminfotech@gmail.com';
+    const recipient = this.cfg.notifyRecipient;
+    if (!recipient) {
+      this.logger.warn(`No notification recipient configured; skipping lead alert for ref=${lead.ref}`);
+      return false;
+    }
     const subject = `[MRM Inquiry Alert] ${lead.name} (${lead.ref}) — ${lead.subject || lead.type}`;
 
     const text = [

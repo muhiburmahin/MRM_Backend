@@ -102,7 +102,7 @@ export class ContactService {
       phone: dto.phone,
       subject: dto.subject,
       message: dto.message,
-      type: 'GENERAL_INQUIRY',
+      type: 'GENERAL',
     });
     await this.mail.sendCustomerConfirmation({
       ref,
