@@ -1,16 +1,8 @@
-let cachedHandler = null;
-
-async function getHandler() {
-  if (!cachedHandler) {
-    const main = require('../dist/main');
-    cachedHandler = main.default || main;
-  }
-  return cachedHandler;
-}
+const main = require('../dist/main');
+const handler = main.default || main;
 
 module.exports = async (req, res) => {
   try {
-    const handler = await getHandler();
     return await handler(req, res);
   } catch (err) {
     console.error('[MRM Serverless Error]', err);
@@ -27,5 +19,6 @@ module.exports = async (req, res) => {
     }
   }
 };
+
 
 
