@@ -45,10 +45,10 @@ describe('configureApp', () => {
     });
     expect(vercelAllowed).toBe(true);
 
-    let foreignErr: Error | null = null;
-    originFn('https://malicious-site.com', (err) => {
-      foreignErr = err;
+    let foreignAllowed: boolean | undefined = true;
+    originFn('https://malicious-site.com', (_err, ok) => {
+      foreignAllowed = ok;
     });
-    expect(foreignErr).toBeTruthy();
+    expect(foreignAllowed).toBe(false);
   });
 });
