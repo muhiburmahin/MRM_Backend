@@ -25,10 +25,7 @@ export function sanitizeUploadFilename(originalName: string): string {
   return base.slice(0, 120) || 'upload_file';
 }
 
-export function validateUploadExtensionAndMime(
-  originalName: string,
-  mimeType: string,
-): void {
+export function validateUploadExtensionAndMime(originalName: string, mimeType: string): void {
   const ext = extname(originalName).toLowerCase();
   if (!ALLOWED_EXTENSIONS.has(ext)) {
     throw new BadRequestException(`File extension "${ext || 'none'}" is not permitted.`);
@@ -66,10 +63,7 @@ export function validateBufferMagicBytes(buffer: Buffer, mimeType: string): void
     case 'image/jpeg':
       // JPEG SOI marker: FF D8 FF
       isValid =
-        buffer.length >= 3 &&
-        buffer[0] === 0xff &&
-        buffer[1] === 0xd8 &&
-        buffer[2] === 0xff;
+        buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
       break;
 
     case 'image/png':
@@ -108,9 +102,7 @@ export function validateBufferMagicBytes(buffer: Buffer, mimeType: string): void
       break;
 
     case 'image/svg+xml': {
-      const content = buffer
-        .toString('utf8', 0, Math.min(buffer.length, 2048))
-        .toLowerCase();
+      const content = buffer.toString('utf8', 0, Math.min(buffer.length, 2048)).toLowerCase();
       isValid = content.includes('<svg') || content.includes('<?xml');
       break;
     }

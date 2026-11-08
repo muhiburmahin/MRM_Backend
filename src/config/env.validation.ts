@@ -150,7 +150,11 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   // process.env.TZ is automatically injected as ':UTC' or glibc/POSIX syntax, or may carry quotes.
   const sanitizeZone = (val: unknown): string => {
     if (typeof val !== 'string') return '';
-    return val.trim().replace(/^['"]+|['"]+$/g, '').replace(/^:+/, '').trim();
+    return val
+      .trim()
+      .replace(/^['"]+|['"]+$/g, '')
+      .replace(/^:+/, '')
+      .trim();
   };
 
   const appTz = sanitizeZone(env.APP_TIMEZONE) || 'Asia/Dhaka';

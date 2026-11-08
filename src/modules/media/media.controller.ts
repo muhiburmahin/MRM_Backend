@@ -187,7 +187,8 @@ export class MediaController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
-    summary: 'Upload up to 10 media files to storage (Cloudinary or local fallback) in a single request',
+    summary:
+      'Upload up to 10 media files to storage (Cloudinary or local fallback) in a single request',
   })
   @ApiCreatedResponse()
   async uploadMultiple(

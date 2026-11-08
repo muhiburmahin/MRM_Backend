@@ -24,4 +24,3 @@ export class NavigationController {
     return this.navigation.getPublicMenu(key);
   }
 }
-

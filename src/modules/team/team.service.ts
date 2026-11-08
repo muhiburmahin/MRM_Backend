@@ -63,7 +63,9 @@ export class TeamService {
     const where: any = {
       isActive: true,
       isPublic: true,
-      ...(query.department ? { department: { equals: query.department, mode: 'insensitive' as const } } : {}),
+      ...(query.department
+        ? { department: { equals: query.department, mode: 'insensitive' as const } }
+        : {}),
     };
 
     if (query.q) {
@@ -314,10 +316,12 @@ export class TeamService {
           isActive: dto.isActive !== undefined ? dto.isActive : true,
           photoId: dto.photoId ?? null,
           department: dto.department ?? null,
-          socialLinks: asJson(dto.socialLinks ?? {
-            linkedin: dto.linkedinUrl || '',
-            github: dto.githubUrl || '',
-          }),
+          socialLinks: asJson(
+            dto.socialLinks ?? {
+              linkedin: dto.linkedinUrl || '',
+              github: dto.githubUrl || '',
+            },
+          ),
           joinedAt: dto.joinedAt ?? null,
           isPublic: consent.isPublic ?? true,
           consentAt: consent.consentAt ?? new Date(),
@@ -442,12 +446,15 @@ export class TeamService {
         });
 
         // Sync with primary translations if direct fields are provided and translations omitted
-        if (incoming.length === 0 && (dto.name !== undefined || dto.role !== undefined || dto.bio !== undefined)) {
+        if (
+          incoming.length === 0 &&
+          (dto.name !== undefined || dto.role !== undefined || dto.bio !== undefined)
+        ) {
           const transData: Record<string, string | null> = {};
           if (dto.name !== undefined) transData.name = dto.name;
           if (dto.role !== undefined) transData.roleTitle = dto.role;
           if (dto.bio !== undefined) transData.bio = dto.bio;
-          
+
           if (existingLocales.has('en')) {
             await tx.teamMemberTranslation.update({
               where: { memberId_locale: { memberId: id, locale: 'en' } },

@@ -40,9 +40,7 @@ export const authConfig = registerAs('auth', () => {
     .map((s) => s.trim().replace(/\/$/, ''))
     .filter(Boolean);
   const finalOrigins =
-    allowedOrigins.length > 0
-      ? allowedOrigins
-      : ['http://localhost:3000', 'http://localhost:5000'];
+    allowedOrigins.length > 0 ? allowedOrigins : ['http://localhost:3000', 'http://localhost:5000'];
 
   return {
     isProd,

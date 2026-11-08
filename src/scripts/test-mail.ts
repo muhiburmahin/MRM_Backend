@@ -17,7 +17,9 @@ async function main() {
   console.log(`Target Recipient : ${recipient}`);
   console.log(`SMTP Host        : ${host}:${port}`);
   console.log(`SMTP User        : ${user}`);
-  console.log(`SMTP Password    : ${pass ? '•••••••••••••••• (Configured)' : 'NOT SET (Missing in .env)'}`);
+  console.log(
+    `SMTP Password    : ${pass ? '•••••••••••••••• (Configured)' : 'NOT SET (Missing in .env)'}`,
+  );
   console.log('───────────────────────────────────────────────────────');
 
   if (!pass) {
@@ -64,4 +66,3 @@ async function main() {
 }
 
 main().catch(console.error);
-

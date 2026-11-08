@@ -17,7 +17,9 @@ export class NodemailerTransport implements MailTransport {
   private initTransporter(): void {
     const { smtp, enabled } = this.cfg;
     if (!enabled) {
-      this.logger.log('Email delivery is currently disabled (MAIL_ENABLED=false). Emails will run in dry-run mode.');
+      this.logger.log(
+        'Email delivery is currently disabled (MAIL_ENABLED=false). Emails will run in dry-run mode.',
+      );
       return;
     }
 
@@ -46,7 +48,7 @@ export class NodemailerTransport implements MailTransport {
         this.transporter = nodemailer.createTransport({
           host: smtp.host || 'smtp.gmail.com',
           port: smtp.port || 465,
-          secure: smtp.secure ?? (smtp.port === 465),
+          secure: smtp.secure ?? smtp.port === 465,
           auth: {
             user: smtp.user,
             pass: smtp.pass,
@@ -57,7 +59,9 @@ export class NodemailerTransport implements MailTransport {
         });
       }
 
-      this.logger.log(`Nodemailer transport initialized for host=${smtp.host || 'gmail'} user=${smtp.user}`);
+      this.logger.log(
+        `Nodemailer transport initialized for host=${smtp.host || 'gmail'} user=${smtp.user}`,
+      );
     } catch (err) {
       this.logger.error(`Failed to initialize Nodemailer transporter: ${(err as Error).message}`);
       this.transporter = null;
@@ -99,7 +103,9 @@ export class NodemailerTransport implements MailTransport {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email successfully delivered to <${options.to}> [MessageId: ${info.messageId}]`);
+      this.logger.log(
+        `Email successfully delivered to <${options.to}> [MessageId: ${info.messageId}]`,
+      );
       return true;
     } catch (err) {
       this.logger.error(`Failed to send email to <${options.to}>: ${(err as Error).message}`);
@@ -107,4 +113,3 @@ export class NodemailerTransport implements MailTransport {
     }
   }
 }
-

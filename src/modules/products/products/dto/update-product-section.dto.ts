@@ -26,4 +26,3 @@ export class UpdateProductSectionDto {
   @IsNotEmpty()
   data: Record<string, unknown>;
 }
-

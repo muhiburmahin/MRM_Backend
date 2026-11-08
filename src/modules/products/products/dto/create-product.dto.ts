@@ -20,7 +20,13 @@ import {
 import { Type } from 'class-transformer';
 
 export const LAUNCH_STAGES = ['LIVE', 'BETA', 'PLANNED', 'COMING_SOON'] as const;
-export const CONTENT_STATUSES = ['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'] as const;
+export const CONTENT_STATUSES = [
+  'DRAFT',
+  'IN_REVIEW',
+  'SCHEDULED',
+  'PUBLISHED',
+  'ARCHIVED',
+] as const;
 
 export class ProductMediaItemDto {
   @ApiPropertyOptional()

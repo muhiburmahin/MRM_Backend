@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import type { Request, Response } from 'express';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { configureApp, setupSwagger } from './app.setup';
@@ -28,7 +29,7 @@ export async function createApp(): Promise<NestExpressApplication> {
 }
 
 // Default export for Vercel Serverless Function invocations
-export default async function handler(req: any, res: any) {
+export default async function handler(req: Request, res: Response) {
   const app = await createApp();
   const expressInstance = app.getHttpAdapter().getInstance();
   return expressInstance(req, res);

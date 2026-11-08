@@ -27,4 +27,3 @@ export class UpdateServiceSectionDto {
   @IsNotEmpty()
   data: Record<string, unknown>;
 }
-

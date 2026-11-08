@@ -308,7 +308,14 @@ describe('ServicesService', () => {
 
     it('sets publishedAt on first publish only', async () => {
       current = 'DRAFT';
-      await svc.update('id1', { status: 'PUBLISHED' as const, translations: [{ locale: 'en', status: 'PUBLISHED' as const }] }, publisher);
+      await svc.update(
+        'id1',
+        {
+          status: 'PUBLISHED' as const,
+          translations: [{ locale: 'en', status: 'PUBLISHED' as const }],
+        },
+        publisher,
+      );
       expect(prisma.serviceTranslation.upsert).toHaveBeenCalled();
     });
   });

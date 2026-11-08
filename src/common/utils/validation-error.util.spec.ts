@@ -29,9 +29,6 @@ describe('flattenValidationErrors', () => {
     parentError.children = [childError];
 
     const details = flattenValidationErrors([parentError]);
-    expect(details).toEqual([
-      { field: 'address.city', message: 'city should not be empty' },
-    ]);
+    expect(details).toEqual([{ field: 'address.city', message: 'city should not be empty' }]);
   });
 });
-

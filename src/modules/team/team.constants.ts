@@ -2,7 +2,14 @@ export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const LOCALE_RE = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 
 export const PUBLIC_SORT_FIELDS = ['order', 'sortOrder', 'name', 'createdAt'] as const;
-export const ADMIN_SORT_FIELDS = ['order', 'sortOrder', 'slug', 'joinedAt', 'createdAt', 'updatedAt'] as const;
+export const ADMIN_SORT_FIELDS = [
+  'order',
+  'sortOrder',
+  'slug',
+  'joinedAt',
+  'createdAt',
+  'updatedAt',
+] as const;
 export type SortOrder = 'asc' | 'desc';
 
 /** Only these social networks are accepted/returned (https URLs only). */

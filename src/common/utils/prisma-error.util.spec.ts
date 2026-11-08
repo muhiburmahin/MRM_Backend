@@ -76,4 +76,3 @@ describe('mapPrismaError', () => {
     expect(mapPrismaError(null)).toBeNull();
   });
 });
-

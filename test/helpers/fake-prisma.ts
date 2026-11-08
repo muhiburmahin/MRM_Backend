@@ -564,7 +564,14 @@ export class FakePrisma {
         id: randomUUID(),
         slug: input.slug,
         stage: input.stage ?? 'LIVE',
-        status: input.status ?? (Array.isArray(nestedTranslations) && nestedTranslations.some((t: any) => t.status === 'PUBLISHED') ? 'PUBLISHED' : (Array.isArray(nestedTranslations) && nestedTranslations.length ? 'DRAFT' : 'PUBLISHED')),
+        status:
+          input.status ??
+          (Array.isArray(nestedTranslations) &&
+          nestedTranslations.some((t: any) => t.status === 'PUBLISHED')
+            ? 'PUBLISHED'
+            : Array.isArray(nestedTranslations) && nestedTranslations.length
+              ? 'DRAFT'
+              : 'PUBLISHED'),
         allowPublicDetail: input.allowPublicDetail ?? true,
         showOnHomepage: input.showOnHomepage ?? true,
         showOnProductsPage: input.showOnProductsPage ?? true,

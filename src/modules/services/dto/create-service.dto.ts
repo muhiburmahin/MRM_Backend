@@ -16,7 +16,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export const SERVICE_STATUSES = ['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'] as const;
+export const SERVICE_STATUSES = [
+  'DRAFT',
+  'IN_REVIEW',
+  'SCHEDULED',
+  'PUBLISHED',
+  'ARCHIVED',
+] as const;
 
 export class ServiceOfferingItemDto {
   @ApiPropertyOptional()

@@ -62,7 +62,10 @@ export class QueryServicesDto extends ServiceLocaleQueryDto {
   @MaxLength(100)
   q?: string;
 
-  @ApiPropertyOptional({ enum: ['catalog', 'homepage', 'nav'], description: 'Frontend placement context' })
+  @ApiPropertyOptional({
+    enum: ['catalog', 'homepage', 'nav'],
+    description: 'Frontend placement context',
+  })
   @IsOptional()
   @IsIn(['catalog', 'homepage', 'nav'])
   placement?: 'catalog' | 'homepage' | 'nav';

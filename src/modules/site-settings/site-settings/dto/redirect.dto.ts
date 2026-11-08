@@ -22,4 +22,3 @@ export class CreateRedirectDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

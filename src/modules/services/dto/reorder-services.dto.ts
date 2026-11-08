@@ -35,4 +35,3 @@ export class ReorderServicesDto {
   @Type(() => ReorderServiceItemDto)
   items: ReorderServiceItemDto[];
 }
-

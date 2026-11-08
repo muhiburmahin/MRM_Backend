@@ -35,9 +35,9 @@ describe('file-security.util', () => {
     });
 
     it('rejects disallowed extensions', () => {
-      expect(() => validateUploadExtensionAndMime('malicious.exe', 'application/x-msdownload')).toThrow(
-        BadRequestException,
-      );
+      expect(() =>
+        validateUploadExtensionAndMime('malicious.exe', 'application/x-msdownload'),
+      ).toThrow(BadRequestException);
       expect(() => validateUploadExtensionAndMime('script.sh', 'application/x-sh')).toThrow(
         BadRequestException,
       );
@@ -80,7 +80,9 @@ describe('file-security.util', () => {
     });
 
     it('accepts valid SVG content', () => {
-      const svgBuf = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>');
+      const svgBuf = Buffer.from(
+        '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>',
+      );
       expect(() => validateBufferMagicBytes(svgBuf, 'image/svg+xml')).not.toThrow();
     });
 

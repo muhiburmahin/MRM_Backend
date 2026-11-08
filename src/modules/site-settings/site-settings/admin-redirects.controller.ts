@@ -50,4 +50,3 @@ export class AdminRedirectsController {
     return this.settings.deleteRedirect(id, actor);
   }
 }
-

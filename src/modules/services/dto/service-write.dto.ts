@@ -92,13 +92,17 @@ export class CreateServiceDto {
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ example: 'Tailor-made software solutions designed to solve complex business problems.' })
+  @ApiPropertyOptional({
+    example: 'Tailor-made software solutions designed to solve complex business problems.',
+  })
   @IsOptional()
   @Trim()
   @IsString()
   summary?: string;
 
-  @ApiPropertyOptional({ example: 'Full lifecycle software engineering tailored to your business needs.' })
+  @ApiPropertyOptional({
+    example: 'Full lifecycle software engineering tailored to your business needs.',
+  })
   @IsOptional()
   @Trim()
   @IsString()

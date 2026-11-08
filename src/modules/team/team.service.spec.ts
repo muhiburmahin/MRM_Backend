@@ -99,7 +99,9 @@ describe('TeamService', () => {
 
     it('uses the default language when none is given', async () => {
       await svc.listPublic(base);
-      expect(prisma.teamMember.findMany.mock.calls[0][0].select.translations.where.locale).toBe('en');
+      expect(prisma.teamMember.findMany.mock.calls[0][0].select.translations.where.locale).toBe(
+        'en',
+      );
     });
 
     it('filters by department and search, with deterministic ordering', async () => {
@@ -253,7 +255,9 @@ describe('TeamService', () => {
     });
 
     it('refuses to make a profile public without consent', async () => {
-      await expect(svc.create({ ...dto, isPublic: true, consentGiven: false }, publisher)).rejects.toThrow(/consent/i);
+      await expect(
+        svc.create({ ...dto, isPublic: true, consentGiven: false }, publisher),
+      ).rejects.toThrow(/consent/i);
     });
 
     it('needs the publish permission to go public, then records consent', async () => {
@@ -337,7 +341,9 @@ describe('TeamService', () => {
     });
 
     it('publishing needs consent; consentGiven:true records it', async () => {
-      await expect(svc.update('id1', { isPublic: true, consentGiven: false }, publisher)).rejects.toThrow(/consent/i);
+      await expect(
+        svc.update('id1', { isPublic: true, consentGiven: false }, publisher),
+      ).rejects.toThrow(/consent/i);
       await svc.update('id1', { isPublic: true, consentGiven: true }, publisher);
       const data = prisma.teamMember.update.mock.calls[0][0].data;
       expect(data.isPublic).toBe(true);

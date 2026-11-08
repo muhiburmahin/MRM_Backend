@@ -45,4 +45,3 @@ export class CreateTagDto {
   @IsObject()
   i18n: Record<string, unknown>;
 }
-

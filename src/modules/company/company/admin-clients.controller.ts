@@ -64,4 +64,3 @@ export class AdminClientsController {
     return this.clients.remove(id);
   }
 }
-

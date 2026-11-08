@@ -101,7 +101,9 @@ export class AdminServicesController {
 
   @Patch('reorder')
   @Permissions(P.write)
-  @ApiOperation({ summary: 'Batch priority reorder (servicesPageOrder, homepageOrder, navbarOrder)' })
+  @ApiOperation({
+    summary: 'Batch priority reorder (servicesPageOrder, homepageOrder, navbarOrder)',
+  })
   reorder(@Body() dto: ReorderServicesDto, @CurrentUser() actor: AuthenticatedUser) {
     return this.services.reorder(dto, actor);
   }
@@ -143,7 +145,9 @@ export class AdminServicesController {
 
   @Patch(':id/section')
   @Permissions(P.write)
-  @ApiOperation({ summary: 'Independent Per-Tab Saving (basic, offerings, benefits, process, etc.)' })
+  @ApiOperation({
+    summary: 'Independent Per-Tab Saving (basic, offerings, benefits, process, etc.)',
+  })
   updateSection(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateServiceSectionDto,

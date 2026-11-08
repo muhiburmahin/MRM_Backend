@@ -41,24 +41,21 @@ export class ProductsService {
             showOnHomepage: true,
           }
         : query.placement === 'nav'
-        ? {
-            status: { in: [ContentStatus.PUBLISHED, ContentStatus.DRAFT] },
-            showInNavDropdown: true,
-          }
-        : query.placement === 'catalog'
-        ? {
-            status: { in: [ContentStatus.PUBLISHED, ContentStatus.DRAFT] },
-            showOnProductsPage: true,
-          }
-        : {
-            status: ContentStatus.PUBLISHED,
-          }),
+          ? {
+              status: { in: [ContentStatus.PUBLISHED, ContentStatus.DRAFT] },
+              showInNavDropdown: true,
+            }
+          : query.placement === 'catalog'
+            ? {
+                status: { in: [ContentStatus.PUBLISHED, ContentStatus.DRAFT] },
+                showOnProductsPage: true,
+              }
+            : {
+                status: ContentStatus.PUBLISHED,
+              }),
       ...(query.category
         ? {
-            OR: [
-              { category: { slug: query.category } },
-              { categoryId: query.category },
-            ],
+            OR: [{ category: { slug: query.category } }, { categoryId: query.category }],
           }
         : {}),
       ...(query.search
@@ -194,19 +191,12 @@ export class ProductsService {
               },
             ]
           : []),
-        ...(query.status
-          ? [{ status: query.status as ContentStatus }]
-          : []),
-        ...(query.stage
-          ? [{ stage: query.stage as LaunchStage }]
-          : []),
+        ...(query.status ? [{ status: query.status as ContentStatus }] : []),
+        ...(query.stage ? [{ stage: query.stage as LaunchStage }] : []),
         ...(query.category
           ? [
               {
-                OR: [
-                  { category: { slug: query.category } },
-                  { categoryId: query.category },
-                ],
+                OR: [{ category: { slug: query.category } }, { categoryId: query.category }],
               },
             ]
           : []),
@@ -250,10 +240,7 @@ export class ProductsService {
       this.prisma.product.count({ where: { isFeatured: true } }),
       this.prisma.product.count({
         where: {
-          OR: [
-            { stage: LaunchStage.COMING_SOON },
-            { stage: LaunchStage.PLANNED },
-          ],
+          OR: [{ stage: LaunchStage.COMING_SOON }, { stage: LaunchStage.PLANNED }],
         },
       }),
       this.prisma.product.count({ where: { status: ContentStatus.ARCHIVED } }),
@@ -323,7 +310,8 @@ export class ProductsService {
             locale: 'en',
             name: dto.title || dto.slug,
             tagline: dto.tagline || '',
-            summary: dto.shortDescription || dto.description || dto.tagline || dto.title || dto.slug,
+            summary:
+              dto.shortDescription || dto.description || dto.tagline || dto.title || dto.slug,
             body: {} as Prisma.InputJsonValue,
             status: dto.status ?? ContentStatus.DRAFT,
             publishedAt: dto.status === ContentStatus.PUBLISHED ? new Date() : null,
@@ -344,7 +332,11 @@ export class ProductsService {
           data: {
             slug: dto.slug,
             stage: dto.stage ?? LaunchStage.LIVE,
-            status: dto.status ?? (translations.some((t) => t.status === ContentStatus.PUBLISHED) ? ContentStatus.PUBLISHED : ContentStatus.DRAFT),
+            status:
+              dto.status ??
+              (translations.some((t) => t.status === ContentStatus.PUBLISHED)
+                ? ContentStatus.PUBLISHED
+                : ContentStatus.DRAFT),
             title: dto.title || dto.slug,
             tagline: dto.tagline,
             shortDescription: dto.shortDescription,
@@ -721,7 +713,9 @@ export class ProductsService {
             });
           }
 
-          const hasPublishedTranslation = dto.translations.some((t) => t.status === ContentStatus.PUBLISHED);
+          const hasPublishedTranslation = dto.translations.some(
+            (t) => t.status === ContentStatus.PUBLISHED,
+          );
           if (hasPublishedTranslation && existing.status !== ContentStatus.PUBLISHED) {
             await tx.product.update({
               where: { id },

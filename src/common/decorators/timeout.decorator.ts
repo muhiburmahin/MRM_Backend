@@ -7,4 +7,3 @@ import { TIMEOUT_KEY } from '../interceptors/timeout.interceptor';
  */
 export const SetRequestTimeout = (timeoutMs: number) => SetMetadata(TIMEOUT_KEY, timeoutMs);
 export const SkipRequestTimeout = () => SetMetadata(TIMEOUT_KEY, 0);
-

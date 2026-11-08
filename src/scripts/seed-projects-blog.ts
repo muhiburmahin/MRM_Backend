@@ -9,8 +9,12 @@ async function seedProjectsAndBlog() {
   // Get products to link
   const eduManageProduct = await prisma.product.findUnique({ where: { slug: 'edumanage-bd' } });
   const mediShebaProduct = await prisma.product.findUnique({ where: { slug: 'medisheba-bd' } });
-  const multiInstProduct = await prisma.product.findUnique({ where: { slug: 'multi-institution-platform' } });
-  const customDevService = await prisma.service.findFirst({ where: { slug: { contains: 'custom-software' } } });
+  const multiInstProduct = await prisma.product.findUnique({
+    where: { slug: 'multi-institution-platform' },
+  });
+  const customDevService = await prisma.service.findFirst({
+    where: { slug: { contains: 'custom-software' } },
+  });
   const webDevService = await prisma.service.findFirst({ where: { slug: { contains: 'web' } } });
 
   const projectsToSeed = [
@@ -20,7 +24,8 @@ async function seedProjectsAndBlog() {
       projectWorkStatus: 'COMPLETED',
       isFeatured: true,
       isVerified: true,
-      evidenceNote: 'Verified deployment across 15+ educational campuses with active fee reconciliation.',
+      evidenceNote:
+        'Verified deployment across 15+ educational campuses with active fee reconciliation.',
       publishedAt: new Date('2026-01-15T00:00:00.000Z'),
       clientApprovedAt: new Date('2026-01-15T00:00:00.000Z'),
       productId: eduManageProduct?.id || null,
@@ -68,7 +73,8 @@ EduManage BD represents MRM InfoTech's flagship institutional modernization plat
       projectWorkStatus: 'COMPLETED',
       isFeatured: true,
       isVerified: true,
-      evidenceNote: 'Verified production deployment in diagnostic clinical centers with barcode sample routing.',
+      evidenceNote:
+        'Verified production deployment in diagnostic clinical centers with barcode sample routing.',
       publishedAt: new Date('2026-02-10T00:00:00.000Z'),
       clientApprovedAt: new Date('2026-02-10T00:00:00.000Z'),
       productId: mediShebaProduct?.id || null,
@@ -115,7 +121,8 @@ MediSheba BD solves the critical bottlenecks in clinical specimen routing and pa
       projectWorkStatus: 'COMPLETED',
       isFeatured: true,
       isVerified: true,
-      evidenceNote: 'Verified multi-tenant architecture delivering 50+ websites from a single codebase.',
+      evidenceNote:
+        'Verified multi-tenant architecture delivering 50+ websites from a single codebase.',
       publishedAt: new Date('2026-03-01T00:00:00.000Z'),
       clientApprovedAt: new Date('2026-03-01T00:00:00.000Z'),
       productId: multiInstProduct?.id || null,
@@ -160,7 +167,8 @@ MRM InfoTech delivered a multi-tenant architecture where each institution operat
       projectWorkStatus: 'COMPLETED',
       isFeatured: false,
       isVerified: true,
-      evidenceNote: 'Real-time GPS telemetry and fuel dispatch engine verified in corporate fleet tests.',
+      evidenceNote:
+        'Real-time GPS telemetry and fuel dispatch engine verified in corporate fleet tests.',
       publishedAt: new Date('2026-03-20T00:00:00.000Z'),
       clientApprovedAt: new Date('2026-03-20T00:00:00.000Z'),
       productId: null,
@@ -239,9 +247,13 @@ Consuming 1,000+ telemetry pings per second required a spatial database design w
 
   console.log('Seeding Blog Posts...');
 
-  const softwareCat = await prisma.postCategory.findUnique({ where: { slug: 'software-engineering' } });
+  const softwareCat = await prisma.postCategory.findUnique({
+    where: { slug: 'software-engineering' },
+  });
   const cloudCat = await prisma.postCategory.findUnique({ where: { slug: 'saas-cloud' } });
-  const digitalCat = await prisma.postCategory.findUnique({ where: { slug: 'digital-transformation' } });
+  const digitalCat = await prisma.postCategory.findUnique({
+    where: { slug: 'digital-transformation' },
+  });
 
   const nextTag = await prisma.tag.findUnique({ where: { slug: 'next-js' } });
   const nestTag = await prisma.tag.findUnique({ where: { slug: 'nestjs' } });
@@ -523,4 +535,3 @@ seedProjectsAndBlog()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
-

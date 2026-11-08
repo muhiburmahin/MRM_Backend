@@ -110,4 +110,3 @@ export class UpdateClientDto {
   @Min(0)
   sortOrder?: number;
 }
-

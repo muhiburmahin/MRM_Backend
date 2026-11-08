@@ -52,16 +52,18 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
 
   // Configure CORS to allow both production, local, and all Vercel deployments (*.vercel.app)
   const allowedOrigins = Array.from(
-    new Set([
-      ...config.corsOrigins,
-      ...config.authAllowedOrigins,
-      process.env.APP_URL,
-      process.env.PROD_APP_URL,
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-      'http://localhost:5000',
-      'http://localhost:5173',
-    ].filter((o): o is string => Boolean(o && typeof o === 'string'))),
+    new Set(
+      [
+        ...config.corsOrigins,
+        ...config.authAllowedOrigins,
+        process.env.APP_URL,
+        process.env.PROD_APP_URL,
+        process.env.FRONTEND_URL,
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'http://localhost:5173',
+      ].filter((o): o is string => Boolean(o && typeof o === 'string')),
+    ),
   );
 
   app.enableCors({

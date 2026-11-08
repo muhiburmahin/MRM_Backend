@@ -65,4 +65,3 @@ export function mapPrismaError(exception: unknown): MappedPrismaError | null {
 
   return null;
 }
-

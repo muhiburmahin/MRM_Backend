@@ -13,12 +13,7 @@ export interface ApiSuccessEnvelope<T> {
   meta: PaginationMeta | Record<string, unknown> | null;
 }
 
-const SENSITIVE_KEYS = new Set([
-  'passwordHash',
-  'twoFactorSecretEnc',
-  'tokenHash',
-  'codeHash',
-]);
+const SENSITIVE_KEYS = new Set(['passwordHash', 'twoFactorSecretEnc', 'tokenHash', 'codeHash']);
 
 export function stripSensitiveFields<T>(input: T): T {
   if (input === null || input === undefined || typeof input !== 'object') {
@@ -38,11 +33,7 @@ export function stripSensitiveFields<T>(input: T): T {
   return cloned as T;
 }
 
-export function buildPaginationMeta(
-  total: number,
-  page: number,
-  limit: number,
-): PaginationMeta {
+export function buildPaginationMeta(total: number, page: number, limit: number): PaginationMeta {
   const safeLimit = Math.max(1, limit);
   const safePage = Math.max(1, page);
   return {
@@ -67,4 +58,3 @@ export function wrapSuccessResponse<T>(
     meta,
   };
 }
-

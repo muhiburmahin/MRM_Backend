@@ -235,15 +235,7 @@ export class ServicesService {
       ];
     }
 
-    const [
-      total,
-      published,
-      draft,
-      featured,
-      comingSoon,
-      archived,
-      services,
-    ] = await Promise.all([
+    const [total, published, draft, featured, comingSoon, archived, services] = await Promise.all([
       this.prisma.service.count(),
       this.prisma.service.count({ where: { status: ContentStatus.PUBLISHED } }),
       this.prisma.service.count({ where: { status: ContentStatus.DRAFT } }),
@@ -392,7 +384,11 @@ export class ServicesService {
                         status: tStatus,
                         publishedAt: tStatus === ContentStatus.PUBLISHED ? new Date() : null,
                         seoTitle: t.seoTitle || dto.seoTitle,
-                        seoDescription: t.seoDescription || dto.metaDescription || dto.seoDescription || shortDesc,
+                        seoDescription:
+                          t.seoDescription ||
+                          dto.metaDescription ||
+                          dto.seoDescription ||
+                          shortDesc,
                       };
                     })
                   : [
@@ -402,7 +398,8 @@ export class ServicesService {
                         summary: shortDesc,
                         body: asJson({ fullDescription: fullDesc }),
                         status: effectiveStatus,
-                        publishedAt: effectiveStatus === ContentStatus.PUBLISHED ? new Date() : null,
+                        publishedAt:
+                          effectiveStatus === ContentStatus.PUBLISHED ? new Date() : null,
                         seoTitle: dto.seoTitle,
                         seoDescription: dto.metaDescription || dto.seoDescription || shortDesc,
                       },
@@ -497,7 +494,13 @@ export class ServicesService {
   async update(id: string, dto: UpdateServiceDto, actor: AuthenticatedUser) {
     const existing = await this.prisma.service.findUnique({
       where: { id },
-      include: { offerings: true, benefits: true, processSteps: true, mediaGallery: true, serviceFaqs: true },
+      include: {
+        offerings: true,
+        benefits: true,
+        processSteps: true,
+        mediaGallery: true,
+        serviceFaqs: true,
+      },
     });
 
     if (!existing) {
@@ -527,14 +530,17 @@ export class ServicesService {
       await this.assertLocalesEnabled(dto.translations.map((t) => t.locale));
       for (const t of dto.translations) {
         if (t.locale !== 'en' && (!t.name || !t.summary)) {
-          throw new BadRequestException(`Translation for "${t.locale}" requires both name and summary`);
+          throw new BadRequestException(
+            `Translation for "${t.locale}" requires both name and summary`,
+          );
         }
       }
     }
 
     const title = dto.title || dto.name || existing.title || existing.name;
     const shortDesc = dto.shortDescription || dto.description || existing.shortDescription;
-    const fullDesc = dto.fullDescription || dto.description || existing.fullDescription || shortDesc;
+    const fullDesc =
+      dto.fullDescription || dto.description || existing.fullDescription || shortDesc;
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -711,7 +717,8 @@ export class ServicesService {
                 name: t.name,
                 summary: t.summary,
                 body: t.body ? asJson(t.body) : undefined,
-                status: (t.status as ContentStatus) || (dto.status as ContentStatus) || existing.status,
+                status:
+                  (t.status as ContentStatus) || (dto.status as ContentStatus) || existing.status,
                 publishedAt: t.status === ContentStatus.PUBLISHED ? new Date() : undefined,
                 seoTitle: t.seoTitle,
                 seoDescription: t.seoDescription,
@@ -722,7 +729,8 @@ export class ServicesService {
                 name: t.name || title || existing.slug,
                 summary: t.summary || shortDesc || '',
                 body: t.body ? asJson(t.body) : asJson({ fullDescription: fullDesc }),
-                status: (t.status as ContentStatus) || (dto.status as ContentStatus) || existing.status,
+                status:
+                  (t.status as ContentStatus) || (dto.status as ContentStatus) || existing.status,
                 publishedAt: t.status === ContentStatus.PUBLISHED ? new Date() : null,
                 seoTitle: t.seoTitle,
                 seoDescription: t.seoDescription,
@@ -1054,11 +1062,7 @@ export class ServicesService {
     return this.getAdmin(duplicated.id);
   }
 
-  async updateStatus(
-    id: string,
-    body: { status: ContentStatus },
-    actor: AuthenticatedUser,
-  ) {
+  async updateStatus(id: string, body: { status: ContentStatus }, actor: AuthenticatedUser) {
     if (body.status === ContentStatus.PUBLISHED) {
       this.requirePublish(actor);
     }
@@ -1110,7 +1114,13 @@ export class ServicesService {
     });
   }
 
-  async createCategory(data: { name: string; slug: string; description?: string; icon?: string; displayOrder?: number }) {
+  async createCategory(data: {
+    name: string;
+    slug: string;
+    description?: string;
+    icon?: string;
+    displayOrder?: number;
+  }) {
     return this.prisma.serviceCategory.create({
       data: {
         name: data.name,
@@ -1123,7 +1133,17 @@ export class ServicesService {
     });
   }
 
-  async updateCategory(id: string, data: Partial<{ name: string; slug: string; description: string; icon: string; displayOrder: number; isActive: boolean }>) {
+  async updateCategory(
+    id: string,
+    data: Partial<{
+      name: string;
+      slug: string;
+      description: string;
+      icon: string;
+      displayOrder: number;
+      isActive: boolean;
+    }>,
+  ) {
     return this.prisma.serviceCategory.update({
       where: { id },
       data,
@@ -1162,7 +1182,9 @@ export class ServicesService {
       servicesPageOrder: s.servicesPageOrder ?? s.sortOrder ?? 0,
       homepageOrder: s.homepageOrder ?? 0,
       navbarOrder: s.navbarOrder ?? 0,
-      category: s.category ? { id: s.category.id, name: s.category.name, slug: s.category.slug } : null,
+      category: s.category
+        ? { id: s.category.id, name: s.category.name, slug: s.category.slug }
+        : null,
       categoryName: s.category?.name || 'Custom Engineering',
       offerings: (s.offerings || []).map((off: any) => ({
         id: off.id,
