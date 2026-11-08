@@ -73,9 +73,10 @@ const SAFE_REQUEST_ID = /^[\w-]{8,64}$/; // reject anything that could pollute l
             censor: '[redacted]',
           },
           autoLogging: { ignore: (req) => (req.url ?? '').includes('/health') },
-          transport: config.isDevelopment
-            ? { target: 'pino-pretty', options: { singleLine: true } }
-            : undefined,
+          transport:
+            config.isDevelopment && !process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME
+              ? { target: 'pino-pretty', options: { singleLine: true } }
+              : undefined,
         },
       }),
     }),
