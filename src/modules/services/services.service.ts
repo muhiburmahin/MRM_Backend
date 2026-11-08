@@ -83,6 +83,8 @@ export class ServicesService {
       orderBy = [{ isFeatured: 'desc' }, { servicesPageOrder: 'asc' }, { sortOrder: 'asc' }];
     }
 
+    const isMinimalPlacement = placement === 'homepage' || placement === 'nav';
+
     const [total, services] = await Promise.all([
       this.prisma.service.count({ where }),
       this.prisma.service.findMany({
@@ -96,19 +98,23 @@ export class ServicesService {
             where: { isVisible: true },
             orderBy: { displayOrder: 'asc' },
           },
-          benefits: {
-            where: { isVisible: true },
-            orderBy: { displayOrder: 'asc' },
-          },
-          processSteps: {
-            orderBy: { displayOrder: 'asc' },
-          },
-          mediaGallery: {
-            orderBy: { displayOrder: 'asc' },
-          },
-          technologies: {
-            include: { technology: true },
-          },
+          ...(isMinimalPlacement
+            ? {}
+            : {
+                benefits: {
+                  where: { isVisible: true },
+                  orderBy: { displayOrder: 'asc' },
+                },
+                processSteps: {
+                  orderBy: { displayOrder: 'asc' },
+                },
+                mediaGallery: {
+                  orderBy: { displayOrder: 'asc' },
+                },
+                technologies: {
+                  include: { technology: true },
+                },
+              }),
         },
       }),
     ]);

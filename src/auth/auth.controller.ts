@@ -64,7 +64,11 @@ export class AuthController {
       return { requiresTwoFactor: true, twoFactorTicket: result.twoFactorTicket };
     }
     this.cookies.set(res, result.session.token, result.session.expiresAt);
-    return AuthUserResponse.from(result.user);
+    const resp = AuthUserResponse.from(result.user);
+    resp.accessToken = result.session.token;
+    resp.token = result.session.token;
+    resp.expiresAt = result.session.expiresAt.toISOString();
+    return resp;
   }
 
   @Public()
@@ -83,7 +87,11 @@ export class AuthController {
   ): Promise<AuthUserResponse> {
     const { user, session } = await this.auth.verifyTwoFactorLogin(dto, metaOf(req));
     this.cookies.set(res, session.token, session.expiresAt);
-    return AuthUserResponse.from(user);
+    const resp = AuthUserResponse.from(user);
+    resp.accessToken = session.token;
+    resp.token = session.token;
+    resp.expiresAt = session.expiresAt.toISOString();
+    return resp;
   }
 
   @Public()

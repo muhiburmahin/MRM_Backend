@@ -89,15 +89,21 @@ export class ProductsService {
       orderBy = { [query.sortBy]: query.order };
     }
 
+    const isMinimalPlacement = query.placement === 'homepage' || query.placement === 'nav';
+
     const [products, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
         include: {
           category: true,
           mediaItems: { orderBy: { displayOrder: 'asc' } },
-          richFeatures: { orderBy: { displayOrder: 'asc' } },
-          benefits: { orderBy: { displayOrder: 'asc' } },
-          links: { where: { isVisible: true }, orderBy: { displayOrder: 'asc' } },
+          ...(isMinimalPlacement
+            ? {}
+            : {
+                richFeatures: { orderBy: { displayOrder: 'asc' } },
+                benefits: { orderBy: { displayOrder: 'asc' } },
+                links: { where: { isVisible: true }, orderBy: { displayOrder: 'asc' } },
+              }),
           translations: {
             where: {
               locale: { in: locales },

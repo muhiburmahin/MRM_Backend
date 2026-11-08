@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 
 class RoleSummary {
@@ -6,7 +6,7 @@ class RoleSummary {
   @ApiProperty() name!: string;
 }
 
-/** Safe profile: no hashes, no tokens, no internal security fields. */
+/** Safe profile with optional session tokens for API / Bearer authentication. */
 export class AuthUserResponse {
   @ApiProperty() id!: string;
   @ApiProperty() email!: string;
@@ -18,6 +18,15 @@ export class AuthUserResponse {
     description: 'If true, only /auth/me, /auth/logout and /auth/change-password are allowed.',
   })
   mustChangePassword!: boolean;
+
+  @ApiPropertyOptional({ description: 'Bearer session access token' })
+  accessToken?: string;
+
+  @ApiPropertyOptional({ description: 'Bearer session access token alias' })
+  token?: string;
+
+  @ApiPropertyOptional({ description: 'Session expiration in ISO format' })
+  expiresAt?: string;
 
   static from(u: AuthenticatedUser): AuthUserResponse {
     return {

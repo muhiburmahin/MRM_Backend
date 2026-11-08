@@ -24,11 +24,13 @@ export class OriginGuard implements CanActivate {
     if (SAFE_METHODS.has(req.method)) return true;
 
     const originHeader = req.headers.origin ?? this.refererOrigin(req.headers.referer);
+    const authHeader = req.headers.authorization;
+    const hasBearer = !!(authHeader?.startsWith('Bearer ') || authHeader?.startsWith('bearer '));
     const hasSessionCookie = !!readCookie(req.headers.cookie, this.cfg.cookieName);
 
     if (!originHeader) {
-      if (hasSessionCookie) throw new ForbiddenException('Origin required');
-      return true; // non-browser client without a session cookie (e.g. curl login in dev)
+      if (hasSessionCookie && !hasBearer) throw new ForbiddenException('Origin required');
+      return true; // non-browser client without a session cookie (e.g. curl login in dev or API token)
     }
     const origin = originHeader.trim().replace(/\/$/, '');
     const isAllowed =

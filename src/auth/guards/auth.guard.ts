@@ -27,7 +27,13 @@ export class AuthGuard implements CanActivate {
     if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, targets)) return true;
 
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
-    const token = readCookie(req.headers.cookie, this.cfg.cookieName);
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7).trim()
+      : authHeader?.startsWith('bearer ')
+        ? authHeader.slice(7).trim()
+        : null;
+    const token = bearerToken || readCookie(req.headers.cookie, this.cfg.cookieName);
     if (!token) throw new UnauthorizedException('Authentication required');
 
     const user = await this.sessions.validate(token);
