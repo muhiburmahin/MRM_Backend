@@ -12,17 +12,10 @@
   ],
   "functions": {
     "api/test.js": {
-      "includeFiles": [
-        "dist/**",
-        "node_modules/.prisma/client/**"
-      ]
+      "includeFiles": "dist/**"
     },
     "api/index.js": {
-      "includeFiles": [
-        "dist/**",
-        "node_modules/.prisma/client/**"
-      ]
+      "includeFiles": "dist/**"
     }
   }
 }
-
