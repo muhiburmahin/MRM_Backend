@@ -125,8 +125,17 @@ export class EnvironmentVariables {
 }
 
 export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables {
-  // Empty strings in .env files mean "not set".
-  const cleaned = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== ''));
+  // Empty strings in .env files mean "not set". Also strip surrounding single/double quotes from dashboard paste
+  const cleaned = Object.fromEntries(
+    Object.entries(raw)
+      .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+      .map(([k, v]) => {
+        if (typeof v === 'string') {
+          return [k, v.trim().replace(/^['"]+|['"]+$/g, '')];
+        }
+        return [k, v];
+      }),
+  );
   const env = plainToInstance(EnvironmentVariables, cleaned, { enableImplicitConversion: false });
   const errors = validateSync(env, { whitelist: false });
   if (errors.length > 0) {

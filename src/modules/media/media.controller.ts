@@ -27,7 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { randomBytes } from 'crypto';
 import * as fs from 'fs';
 import { MediaKind } from '@prisma/client';
@@ -56,9 +56,14 @@ const ALLOWED_MIME_TYPES: Record<string, MediaKind> = {
 
 const uploadStorage = diskStorage({
   destination: (_req, _file, cb) => {
-    const dir = './uploads';
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const isServerless = process.env.VERCEL === '1' || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const dir = isServerless ? join('/tmp', 'uploads') : './uploads';
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    } catch {
+      // Fallback for restricted filesystems
     }
     cb(null, dir);
   },

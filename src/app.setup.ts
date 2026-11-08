@@ -60,16 +60,23 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
     maxAge: 600,
   });
 
-  app.setGlobalPrefix(API_PREFIX);
+  app.setGlobalPrefix(API_PREFIX, { exclude: ['/', 'docs'] });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: API_DEFAULT_VERSION });
   app.useGlobalPipes(createValidationPipe());
 
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  if (typeof app.useStaticAssets === 'function') {
-    app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
+  try {
+    const isServerless = process.env.VERCEL === '1' || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const uploadsDir = isServerless
+      ? path.join('/tmp', 'uploads')
+      : path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    if (typeof app.useStaticAssets === 'function') {
+      app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
+    }
+  } catch {
+    // Read-only filesystem in serverless environments (AWS Lambda / Vercel)
   }
 }
 
