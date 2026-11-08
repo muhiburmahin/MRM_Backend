@@ -32,6 +32,7 @@ import { randomBytes } from 'crypto';
 import * as fs from 'fs';
 import { MediaKind } from '@prisma/client';
 import { CurrentUser, Permissions } from '../../auth/decorators/auth.decorators';
+import { SkipRequestTimeout } from '../../common/decorators/timeout.decorator';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { MediaService } from './media.service';
 import { CloudinaryService } from './cloudinary.service';
@@ -98,6 +99,7 @@ export class MediaController {
   ) {}
 
   @Post('upload')
+  @SkipRequestTimeout()
   @Permissions('media:upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -177,6 +179,7 @@ export class MediaController {
   }
 
   @Post('upload-multiple')
+  @SkipRequestTimeout()
   @Permissions('media:upload')
   @UseInterceptors(
     FilesInterceptor('files', 10, {
