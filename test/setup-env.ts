@@ -8,3 +8,4 @@ process.env.AUTH_IP_HASH_SALT = 'unit-test-only-not-a-secret';
 process.env.LOG_LEVEL = 'silent';
 process.env.SWAGGER_ENABLED = 'false';
 process.env.THROTTLE_LIMIT = '1000';
+process.env.MAIL_ENABLED = 'false';

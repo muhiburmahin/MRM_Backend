@@ -5,6 +5,11 @@
       "source": "/(.*)",
       "destination": "/api/index"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "node_modules/.prisma/client/**"
+    }
+  }
 }
 

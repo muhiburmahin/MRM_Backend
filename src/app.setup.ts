@@ -80,7 +80,7 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
       if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
+        callback(null, false);
       }
     },
     credentials: true,

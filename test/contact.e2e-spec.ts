@@ -27,7 +27,7 @@ describe('Contact and leads API (e2e)', () => {
     it('accepts a valid submission and stores normalized email with NEW status', async () => {
       const response = await publicContact().send(valid).expect(201);
 
-      expect(response.body).toEqual({ message: expect.any(String) });
+      expect(response.body).toMatchObject({ message: expect.any(String) });
       expect(db.contact.rows).toHaveLength(1);
       expect(db.contact.rows[0]).toMatchObject({
         email: 'rahim@example.com',

@@ -11,7 +11,10 @@ function intEnv(name: string, def: number, min: number, max: number): number {
 }
 
 export const mailConfig = registerAs('mail', () => {
-  const enabled = process.env.MAIL_ENABLED !== 'false';
+  const isTest = process.env.NODE_ENV === 'test';
+  const enabled = isTest
+    ? process.env.MAIL_ENABLED === 'true'
+    : process.env.MAIL_ENABLED !== 'false';
   const from = process.env.MAIL_FROM || 'MRM InfoTech <contact.mrminfotech@gmail.com>';
   const notifyRecipient = process.env.MAIL_NOTIFY_RECIPIENT || 'contact.mrminfotech@gmail.com';
 
