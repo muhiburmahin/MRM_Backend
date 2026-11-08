@@ -24,6 +24,7 @@ const leadSelect = {
   email: true,
   phone: true,
   company: true,
+  country: true,
   message: true,
   payload: true,
   locale: true,
@@ -99,8 +100,9 @@ export class ContactService {
       name: dto.name,
       email: dto.email,
       phone: dto.phone,
+      subject: dto.subject,
       message: dto.message,
-      type: 'GENERAL',
+      type: 'GENERAL_INQUIRY',
     });
     await this.mail.sendCustomerConfirmation({
       ref,
@@ -108,7 +110,11 @@ export class ContactService {
       email: dto.email,
     });
 
-    return { message: 'Thank you for contacting us. We will get back to you soon.' };
+    return {
+      message: 'Thank you for contacting us. We will get back to you soon.',
+      ref,
+      referenceNumber: ref,
+    };
   }
 
   async createProjectLead(dto: StartProjectDto) {
@@ -169,8 +175,10 @@ export class ContactService {
       name: dto.name,
       email: dto.email,
       phone: dto.phone,
-      message: dto.message,
-      type: 'PROJECT',
+      company: dto.company,
+      subject: dto.serviceInterested ? `Service: ${dto.serviceInterested}` : 'Project Proposal',
+      message: `${dto.message}\n\nBudget: ${dto.budgetRange || 'Not specified'}\nTimeline: ${dto.timeline || 'Not specified'}`,
+      type: 'PROJECT_PROPOSAL',
     });
     await this.mail.sendCustomerConfirmation({
       ref,
@@ -182,6 +190,7 @@ export class ContactService {
       message:
         'Thank you for your project inquiry. Our team will review your requirements and reach out shortly.',
       ref,
+      referenceNumber: ref,
     };
   }
 

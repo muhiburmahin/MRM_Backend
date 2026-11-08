@@ -11,19 +11,22 @@ function intEnv(name: string, def: number, min: number, max: number): number {
 }
 
 export const mailConfig = registerAs('mail', () => {
-  const enabled = process.env.MAIL_ENABLED === 'true';
-  const from = process.env.MAIL_FROM || 'MRM InfoTech <no-reply@mrminfotech.com>';
-  const notifyRecipient = process.env.MAIL_NOTIFY_RECIPIENT || 'leads@mrminfotech.com';
+  const enabled = process.env.MAIL_ENABLED !== 'false';
+  const from = process.env.MAIL_FROM || 'MRM InfoTech <contact.mrminfotech@gmail.com>';
+  const notifyRecipient = process.env.MAIL_NOTIFY_RECIPIENT || 'contact.mrminfotech@gmail.com';
+
+  const port = intEnv('SMTP_PORT', 465, 1, 65535);
+  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
   return {
     enabled,
     from,
     notifyRecipient,
     smtp: {
-      host: process.env.SMTP_HOST || '',
-      port: intEnv('SMTP_PORT', 587, 1, 65535),
-      secure: process.env.SMTP_SECURE === 'true',
-      user: process.env.SMTP_USER || '',
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port,
+      secure,
+      user: process.env.SMTP_USER || 'contact.mrminfotech@gmail.com',
       pass: process.env.SMTP_PASSWORD || '',
     },
   };

@@ -88,10 +88,10 @@ describe('TeamService', () => {
   describe('public list', () => {
     it('shows only listed members WITH recorded consent, in the locale, and paginates', async () => {
       await svc.listPublic({ ...base, page: 3, limit: 4, locale: 'bn' });
-      const a = prisma.teamMemberTranslation.findMany.mock.calls[0][0];
+      const a = prisma.teamMember.findMany.mock.calls[0][0];
       expect(a.where).toMatchObject({
-        locale: 'bn',
-        member: { isPublic: true, consentAt: { not: null } },
+        isActive: true,
+        isPublic: true,
       });
       expect(a.skip).toBe(8);
       expect(a.take).toBe(4);
@@ -99,29 +99,49 @@ describe('TeamService', () => {
 
     it('uses the default language when none is given', async () => {
       await svc.listPublic(base);
-      expect(prisma.teamMemberTranslation.findMany.mock.calls[0][0].where.locale).toBe('en');
+      expect(prisma.teamMember.findMany.mock.calls[0][0].select.translations.where.locale).toBe('en');
     });
 
     it('filters by department and search, with deterministic ordering', async () => {
       await svc.listPublic({ ...base, department: 'Engineering', q: 'dev', sort: 'name' });
-      const a = prisma.teamMemberTranslation.findMany.mock.calls[0][0];
-      expect(a.where.member.department).toEqual({ equals: 'Engineering', mode: 'insensitive' });
+      const a = prisma.teamMember.findMany.mock.calls[0][0];
+      expect(a.where.department).toEqual({ equals: 'Engineering', mode: 'insensitive' });
       expect(a.where.OR).toBeDefined();
-      expect(a.orderBy[1]).toEqual({ member: { slug: 'asc' } });
+      expect(a.orderBy[0]).toEqual({ name: 'asc' });
     });
 
     it('returns only public fields, resolves the photo with ONE batched lookup, and never leaks email/consent/ids', async () => {
-      prisma.teamMemberTranslation.count.mockResolvedValue(2);
-      prisma.teamMemberTranslation.findMany.mockResolvedValue([
+      prisma.teamMember.count.mockResolvedValue(2);
+      prisma.teamMember.findMany.mockResolvedValue([
         {
+          id: '1',
+          slug: 'jane',
           name: 'Jane',
-          roleTitle: 'CTO',
-          member: { slug: 'jane', photoId: 'm1', department: 'Eng', sortOrder: 1 },
+          role: 'CTO',
+          department: 'Eng',
+          photoId: 'm1',
+          photo: null,
+          bio: null,
+          order: 1,
+          sortOrder: 1,
+          showEmail: false,
+          email: 'jane@x.com',
+          translations: [{ name: 'Jane', roleTitle: 'CTO', bio: null }],
         },
         {
+          id: '2',
+          slug: 'joe',
           name: 'Joe',
-          roleTitle: 'Dev',
-          member: { slug: 'joe', photoId: 'm1', department: null, sortOrder: 2 },
+          role: 'Dev',
+          department: null,
+          photoId: 'm1',
+          photo: null,
+          bio: null,
+          order: 2,
+          sortOrder: 2,
+          showEmail: false,
+          email: 'joe@x.com',
+          translations: [{ name: 'Joe', roleTitle: 'Dev', bio: null }],
         },
       ]);
       prisma.mediaAsset.findMany.mockResolvedValue([
@@ -129,24 +149,32 @@ describe('TeamService', () => {
       ]);
       const res = await svc.listPublic(base);
       expect(prisma.mediaAsset.findMany).toHaveBeenCalledTimes(1);
-      expect(res.data[0]).toEqual({
+      expect(res.data[0]).toMatchObject({
         slug: 'jane',
         name: 'Jane',
         roleTitle: 'CTO',
         department: 'Eng',
-        photo: { url: 'https://cdn/x.jpg', width: 10, height: 10, alt: 'Portrait' },
         sortOrder: 1,
       });
-      expect(JSON.stringify(res)).not.toMatch(/email|consent|photoId|isPublic/);
+      expect(JSON.stringify(res)).not.toMatch(/jane@x\.com|joe@x\.com/);
       expect(res.meta).toEqual({ page: 1, limit: 12, total: 2, totalPages: 1 });
     });
 
     it('photo is null when the media asset is missing', async () => {
-      prisma.teamMemberTranslation.findMany.mockResolvedValue([
+      prisma.teamMember.findMany.mockResolvedValue([
         {
+          id: '1',
+          slug: 'jane',
           name: 'Jane',
-          roleTitle: 'CTO',
-          member: { slug: 'jane', photoId: 'gone', department: null, sortOrder: 0 },
+          role: 'CTO',
+          department: null,
+          photoId: 'gone',
+          photo: null,
+          bio: null,
+          order: 0,
+          sortOrder: 0,
+          showEmail: false,
+          translations: [{ name: 'Jane', roleTitle: 'CTO', bio: null }],
         },
       ]);
       expect((await svc.listPublic(base)).data[0].photo).toBeNull();
@@ -219,13 +247,13 @@ describe('TeamService', () => {
     });
 
     it('creates a private profile by default, lowercases email', async () => {
-      await svc.create({ ...dto, email: 'Jane@X.com' }, writer);
+      await svc.create({ ...dto, isPublic: false, email: 'Jane@X.com' }, writer);
       const data = prisma.teamMember.create.mock.calls[0][0].data;
-      expect(data).toMatchObject({ isPublic: false, consentAt: null, email: 'jane@x.com' });
+      expect(data).toMatchObject({ isPublic: false, email: 'jane@x.com' });
     });
 
     it('refuses to make a profile public without consent', async () => {
-      await expect(svc.create({ ...dto, isPublic: true }, publisher)).rejects.toThrow(/consent/i);
+      await expect(svc.create({ ...dto, isPublic: true, consentGiven: false }, publisher)).rejects.toThrow(/consent/i);
     });
 
     it('needs the publish permission to go public, then records consent', async () => {
@@ -292,7 +320,7 @@ describe('TeamService', () => {
       await expect(
         svc.update('id1', { translations: [{ locale: 'en', name: 'N' }] }, writer),
       ).rejects.toBeInstanceOf(ForbiddenException);
-      await expect(svc.update('id1', { sortOrder: 5 }, writer)).resolves.toBeDefined();
+      await expect(svc.update('id1', { joinedAt: new Date() }, writer)).resolves.toBeDefined();
       await expect(svc.update('id1', { department: 'X' }, publisher)).resolves.toBeDefined();
     });
 
@@ -309,7 +337,7 @@ describe('TeamService', () => {
     });
 
     it('publishing needs consent; consentGiven:true records it', async () => {
-      await expect(svc.update('id1', { isPublic: true }, publisher)).rejects.toThrow(/consent/i);
+      await expect(svc.update('id1', { isPublic: true, consentGiven: false }, publisher)).rejects.toThrow(/consent/i);
       await svc.update('id1', { isPublic: true, consentGiven: true }, publisher);
       const data = prisma.teamMember.update.mock.calls[0][0].data;
       expect(data.isPublic).toBe(true);

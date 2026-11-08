@@ -307,7 +307,21 @@ export class ServicesService {
   }
 
   async create(dto: CreateServiceDto, actor: AuthenticatedUser) {
-    if (dto.status === ContentStatus.PUBLISHED) {
+    if (dto.translations && dto.translations.length > 0) {
+      this.assertUnique(dto.translations.map((t) => t.locale));
+      await this.assertLocalesEnabled(dto.translations.map((t) => t.locale));
+    }
+
+    const effectiveStatus =
+      (dto.status as ContentStatus) ||
+      (dto.translations?.[0]?.status as ContentStatus) ||
+      ContentStatus.DRAFT;
+
+    const isPublishing =
+      effectiveStatus === ContentStatus.PUBLISHED ||
+      dto.translations?.some((t) => t.status === ContentStatus.PUBLISHED);
+
+    if (isPublishing) {
       this.requirePublish(actor);
     }
 
@@ -366,18 +380,33 @@ export class ServicesService {
             includeInSitemap: dto.includeInSitemap ?? true,
             categoryId: dto.categoryId,
             translations: {
-              create: [
-                {
-                  locale: 'en',
-                  name: title,
-                  summary: shortDesc,
-                  body: asJson({ fullDescription: fullDesc }),
-                  status: (dto.status as ContentStatus) || ContentStatus.PUBLISHED,
-                  publishedAt: dto.status === ContentStatus.PUBLISHED ? new Date() : null,
-                  seoTitle: dto.seoTitle,
-                  seoDescription: dto.metaDescription || dto.seoDescription || shortDesc,
-                },
-              ],
+              create:
+                dto.translations && dto.translations.length > 0
+                  ? dto.translations.map((t) => {
+                      const tStatus = (t.status as ContentStatus) || effectiveStatus;
+                      return {
+                        locale: t.locale,
+                        name: t.name || title,
+                        summary: t.summary || shortDesc,
+                        body: t.body ? asJson(t.body) : asJson({ fullDescription: fullDesc }),
+                        status: tStatus,
+                        publishedAt: tStatus === ContentStatus.PUBLISHED ? new Date() : null,
+                        seoTitle: t.seoTitle || dto.seoTitle,
+                        seoDescription: t.seoDescription || dto.metaDescription || dto.seoDescription || shortDesc,
+                      };
+                    })
+                  : [
+                      {
+                        locale: 'en',
+                        name: title,
+                        summary: shortDesc,
+                        body: asJson({ fullDescription: fullDesc }),
+                        status: effectiveStatus,
+                        publishedAt: effectiveStatus === ContentStatus.PUBLISHED ? new Date() : null,
+                        seoTitle: dto.seoTitle,
+                        seoDescription: dto.metaDescription || dto.seoDescription || shortDesc,
+                      },
+                    ],
             },
           },
         });
@@ -477,6 +506,30 @@ export class ServicesService {
 
     if (dto.status === ContentStatus.PUBLISHED && existing.status !== ContentStatus.PUBLISHED) {
       this.requirePublish(actor);
+    }
+
+    if (existing.status === ContentStatus.PUBLISHED) {
+      const touchingLive =
+        dto.slug !== undefined ||
+        dto.title !== undefined ||
+        dto.name !== undefined ||
+        dto.isActive !== undefined ||
+        (dto.translations && dto.translations.length > 0) ||
+        dto.shortDescription !== undefined ||
+        dto.description !== undefined;
+      if (touchingLive) {
+        this.requirePublish(actor);
+      }
+    }
+
+    if (dto.translations && dto.translations.length > 0) {
+      this.assertUnique(dto.translations.map((t) => t.locale));
+      await this.assertLocalesEnabled(dto.translations.map((t) => t.locale));
+      for (const t of dto.translations) {
+        if (t.locale !== 'en' && (!t.name || !t.summary)) {
+          throw new BadRequestException(`Translation for "${t.locale}" requires both name and summary`);
+        }
+      }
     }
 
     const title = dto.title || dto.name || existing.title || existing.name;
@@ -633,6 +686,7 @@ export class ServicesService {
             summary: shortDesc || '',
             body: asJson({ fullDescription: fullDesc }),
             status: (dto.status as ContentStatus) || existing.status,
+            publishedAt: dto.status === ContentStatus.PUBLISHED ? new Date() : undefined,
             seoTitle: dto.seoTitle,
             seoDescription: dto.metaDescription || dto.seoDescription,
           },
@@ -648,6 +702,34 @@ export class ServicesService {
             seoDescription: dto.metaDescription || dto.seoDescription,
           },
         });
+
+        if (dto.translations && dto.translations.length > 0) {
+          for (const t of dto.translations) {
+            await tx.serviceTranslation.upsert({
+              where: { serviceId_locale: { serviceId: id, locale: t.locale } },
+              update: {
+                name: t.name,
+                summary: t.summary,
+                body: t.body ? asJson(t.body) : undefined,
+                status: (t.status as ContentStatus) || (dto.status as ContentStatus) || existing.status,
+                publishedAt: t.status === ContentStatus.PUBLISHED ? new Date() : undefined,
+                seoTitle: t.seoTitle,
+                seoDescription: t.seoDescription,
+              },
+              create: {
+                serviceId: id,
+                locale: t.locale,
+                name: t.name || title || existing.slug,
+                summary: t.summary || shortDesc || '',
+                body: t.body ? asJson(t.body) : asJson({ fullDescription: fullDesc }),
+                status: (t.status as ContentStatus) || (dto.status as ContentStatus) || existing.status,
+                publishedAt: t.status === ContentStatus.PUBLISHED ? new Date() : null,
+                seoTitle: t.seoTitle,
+                seoDescription: t.seoDescription,
+              },
+            });
+          }
+        }
       });
 
       await this.audit(actor, 'service.update', id, { slug: existing.slug });
@@ -1259,6 +1341,25 @@ export class ServicesService {
       updatedAt: s.updatedAt,
       createdAt: s.createdAt,
     };
+  }
+
+  private assertUnique(locales: string[]): void {
+    if (new Set(locales).size !== locales.length) {
+      throw new BadRequestException('Each locale may appear only once');
+    }
+  }
+
+  private async assertLocalesEnabled(locales: string[]): Promise<void> {
+    if (!locales.length) return;
+    const rows = await this.prisma.language.findMany({
+      where: { code: { in: locales }, isEnabled: true },
+      select: { code: true },
+    });
+    const ok = new Set(rows.map((r) => r.code));
+    const bad = locales.filter((l) => !ok.has(l));
+    if (bad.length) {
+      throw new BadRequestException(`Unknown or disabled locale: ${bad.join(', ')}`);
+    }
   }
 
   private requirePublish(actor: AuthenticatedUser): void {

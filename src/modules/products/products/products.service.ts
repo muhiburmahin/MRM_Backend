@@ -344,7 +344,7 @@ export class ProductsService {
           data: {
             slug: dto.slug,
             stage: dto.stage ?? LaunchStage.LIVE,
-            status: dto.status ?? ContentStatus.PUBLISHED,
+            status: dto.status ?? (translations.some((t) => t.status === ContentStatus.PUBLISHED) ? ContentStatus.PUBLISHED : ContentStatus.DRAFT),
             title: dto.title || dto.slug,
             tagline: dto.tagline,
             shortDescription: dto.shortDescription,
@@ -679,6 +679,53 @@ export class ProductsService {
                 answer: faq.answer,
                 displayOrder: faq.displayOrder ?? idx + 1,
               })),
+            });
+          }
+        }
+
+        if (dto.translations && dto.translations.length > 0) {
+          for (const t of dto.translations) {
+            await tx.productTranslation.upsert({
+              where: {
+                productId_locale: {
+                  productId: id,
+                  locale: t.locale,
+                },
+              },
+              update: {
+                name: t.name,
+                tagline: t.tagline,
+                summary: t.summary,
+                body: t.body as Prisma.InputJsonValue,
+                status: t.status as ContentStatus,
+                publishedAt: t.status === ContentStatus.PUBLISHED ? new Date() : undefined,
+                ogImageId: t.ogImageId,
+                seoTitle: t.seoTitle,
+                seoDescription: t.seoDescription,
+                noIndex: t.noIndex,
+              },
+              create: {
+                productId: id,
+                locale: t.locale,
+                name: t.name,
+                tagline: t.tagline,
+                summary: t.summary,
+                body: t.body as Prisma.InputJsonValue,
+                status: (t.status as ContentStatus) ?? ContentStatus.DRAFT,
+                publishedAt: t.status === ContentStatus.PUBLISHED ? new Date() : null,
+                ogImageId: t.ogImageId,
+                seoTitle: t.seoTitle,
+                seoDescription: t.seoDescription,
+                noIndex: t.noIndex ?? false,
+              },
+            });
+          }
+
+          const hasPublishedTranslation = dto.translations.some((t) => t.status === ContentStatus.PUBLISHED);
+          if (hasPublishedTranslation && existing.status !== ContentStatus.PUBLISHED) {
+            await tx.product.update({
+              where: { id },
+              data: { status: ContentStatus.PUBLISHED },
             });
           }
         }
@@ -1167,7 +1214,6 @@ export class ProductsService {
       id: product.id,
       slug: product.slug,
       stage: product.stage,
-      status: product.status,
       title,
       name: title,
       tagline,
@@ -1211,7 +1257,6 @@ export class ProductsService {
       id: product.id,
       slug: product.slug,
       stage: product.stage,
-      status: product.status,
       title,
       name: title,
       tagline,
@@ -1268,7 +1313,6 @@ export class ProductsService {
       id: product.id,
       slug: product.slug,
       stage: product.stage,
-      status: product.status,
       title,
       name: title,
       tagline,

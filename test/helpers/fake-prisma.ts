@@ -564,6 +564,12 @@ export class FakePrisma {
         id: randomUUID(),
         slug: input.slug,
         stage: input.stage ?? 'LIVE',
+        status: input.status ?? (Array.isArray(nestedTranslations) && nestedTranslations.some((t: any) => t.status === 'PUBLISHED') ? 'PUBLISHED' : (Array.isArray(nestedTranslations) && nestedTranslations.length ? 'DRAFT' : 'PUBLISHED')),
+        allowPublicDetail: input.allowPublicDetail ?? true,
+        showOnHomepage: input.showOnHomepage ?? true,
+        showOnProductsPage: input.showOnProductsPage ?? true,
+        showInNavDropdown: input.showInNavDropdown ?? true,
+        displayOrder: input.displayOrder ?? 0,
         logoId: input.logoId ?? null,
         heroImageId: input.heroImageId ?? null,
         brandColor: input.brandColor ?? null,
@@ -632,14 +638,28 @@ export class FakePrisma {
         })),
     upsert: async ({ where, create, update }: Data): Promise<Data> => {
       const unique = asData(asData(where).productId_locale);
+      const productId = (unique.productId as string) ?? (asData(where).productId as string);
+      const locale = (unique.locale as string) ?? (asData(where).locale as string);
       let translation = this.productTranslations.find(
-        (item) => item.productId === unique.productId && item.locale === unique.locale,
+        (item) => item.productId === productId && item.locale === locale,
       );
-      if (translation) assignDefined(translation, update);
-      else {
-        translation = { id: randomUUID(), ...asData(create) };
+      if (translation) {
+        assignDefined(translation, update);
+        const product = this.products.find((candidate) => candidate.id === productId);
+        if (product && Array.isArray(product.translations)) {
+          const idx = (product.translations as Data[]).findIndex((t) => t.locale === locale);
+          if (idx !== -1) {
+            assignDefined((product.translations as Data[])[idx], update);
+          } else {
+            (product.translations as Data[]).push(translation);
+          }
+        }
+      } else {
+        const createData = asData(create);
+        const { product: prodConn, language: langConn, ...cleanCreate } = createData;
+        translation = { id: randomUUID(), productId, locale, ...cleanCreate };
         this.productTranslations.push(translation);
-        const product = this.products.find((candidate) => candidate.id === translation?.productId);
+        const product = this.products.find((candidate) => candidate.id === productId);
         if (product) (product.translations as Data[]).push(translation);
       }
       return translation;

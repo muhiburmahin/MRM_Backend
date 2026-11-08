@@ -53,7 +53,7 @@ export class UpdateCompanyDto {
   @Length(2, 150)
   name?: string;
 
-  @ApiPropertyOptional({ nullable: true, example: 'MRM InfoTech Ltd.' })
+  @ApiPropertyOptional({ nullable: true, example: 'MRM InfoTech' })
   @IsOptional()
   @Transform(trim)
   @ValidateIf((_o, v) => v !== null && v !== undefined)
@@ -194,7 +194,7 @@ export class UpdateCompanyDto {
   @MaxLength(300)
   youtubeUrl?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: '© 2026 MRM InfoTech Ltd. All rights reserved.' })
+  @ApiPropertyOptional({ nullable: true, example: '© 2026 MRM InfoTech. All rights reserved.' })
   @IsOptional()
   @Transform(trim)
   @ValidateIf((_o, v) => v !== null && v !== undefined)

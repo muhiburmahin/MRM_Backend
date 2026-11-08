@@ -69,10 +69,24 @@ export class AdminTeamController {
     return this.team.create(dto, actor);
   }
 
-  @Put(':id')
   @Patch(':id')
   @Permissions(P.write)
   @ApiOperation({ summary: 'Partial update; translations are upserted by locale' })
+  @ApiOkResponse({ type: AdminTeamMember })
+  @ApiBadRequestResponse()
+  @ApiNotFoundResponse()
+  @ApiConflictResponse()
+  patch(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTeamMemberDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.team.update(id, dto, actor);
+  }
+
+  @Put(':id')
+  @Permissions(P.write)
+  @ApiOperation({ summary: 'Full or partial update; translations are upserted by locale' })
   @ApiOkResponse({ type: AdminTeamMember })
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()

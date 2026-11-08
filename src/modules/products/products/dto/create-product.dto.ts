@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsDate,
@@ -367,10 +368,6 @@ export class ProductTranslationDto {
 export class CreateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
-  id?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
   categoryName?: string;
 
   @ApiPropertyOptional()
@@ -388,14 +385,6 @@ export class CreateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   seo?: any;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  createdAt?: any;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  updatedAt?: any;
 
   @ApiProperty({ example: 'edumanage-bd' })
   @IsString()
@@ -677,6 +666,7 @@ export class CreateProductDto {
   @ApiPropertyOptional({ type: [ProductTranslationDto] })
   @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ProductTranslationDto)
   translations?: ProductTranslationDto[];

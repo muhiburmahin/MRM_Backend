@@ -72,9 +72,23 @@ export class AdminProjectsController {
   }
 
   @Patch(':id')
-  @Put(':id')
   @Permissions(P.write)
   @ApiOperation({ summary: 'Partial update; translations are upserted by locale' })
+  @ApiOkResponse({ type: AdminProject })
+  @ApiBadRequestResponse()
+  @ApiNotFoundResponse()
+  @ApiConflictResponse()
+  patch(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProjectDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.projects.update(id, dto, actor);
+  }
+
+  @Put(':id')
+  @Permissions(P.write)
+  @ApiOperation({ summary: 'Full or partial update; translations are upserted by locale' })
   @ApiOkResponse({ type: AdminProject })
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
