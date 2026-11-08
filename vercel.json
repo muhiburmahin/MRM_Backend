@@ -2,11 +2,21 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/api/test",
+      "destination": "/api/test"
+    },
+    {
       "source": "/(.*)",
       "destination": "/api/index"
     }
   ],
   "functions": {
+    "api/test.js": {
+      "includeFiles": [
+        "dist/**",
+        "node_modules/.prisma/client/**"
+      ]
+    },
     "api/index.js": {
       "includeFiles": [
         "dist/**",
