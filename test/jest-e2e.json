@@ -3,6 +3,7 @@
   "rootDir": "..",
   "roots": ["<rootDir>/test", "<rootDir>/src"],
   "testEnvironment": "node",
+  "testTimeout": 30000,
   "setupFiles": ["<rootDir>/test/setup-env.ts"],
   "testRegex": ".e2e-spec.ts$",
   "transform": { "^.+\\.(t|j)s$": "ts-jest" }

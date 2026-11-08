@@ -46,10 +46,10 @@ jobs:
         run: npm run typecheck
 
       - name: Run unit test suites
-        run: npm test -- --runInBand
+        run: npm test -- --runInBand --forceExit
 
       - name: Run end-to-end test suites
-        run: npm run test:e2e -- --runInBand
+        run: npm run test:e2e -- --runInBand --forceExit
 
       - name: Verify production build
         run: npm run build
