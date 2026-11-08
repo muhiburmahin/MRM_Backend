@@ -241,6 +241,7 @@ describe('ServicesService', () => {
     });
 
     it('does not fail the request when the audit write fails', async () => {
+      jest.spyOn((svc as any).logger, 'error').mockImplementation(() => {});
       prisma.auditLog.create.mockRejectedValue(new Error('db down'));
       await expect(svc.create(dto, writer)).resolves.toBeDefined();
     });
