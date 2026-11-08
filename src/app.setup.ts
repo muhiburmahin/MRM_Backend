@@ -50,13 +50,49 @@ export function configureApp(app: NestExpressApplication, config: AppConfigServi
     ),
   );
 
-  // Explicit allow-list. No wildcard. Empty list => browsers from other origins are refused.
-  const origins = config.corsOrigins.filter((origin) => config.authAllowedOrigins.includes(origin));
+  // Configure CORS to allow both production, local, and all Vercel deployments (*.vercel.app)
+  const allowedOrigins = Array.from(
+    new Set([
+      ...config.corsOrigins,
+      ...config.authAllowedOrigins,
+      process.env.APP_URL,
+      process.env.PROD_APP_URL,
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:5000',
+      'http://localhost:5173',
+    ].filter((o): o is string => Boolean(o && typeof o === 'string'))),
+  );
+
   app.enableCors({
-    origin: origins.length > 0 ? origins : false,
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    // Cookie sessions are enabled only for exact allow-listed origins; OriginGuard enforces CSRF.
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, curl, server-side fetch)
+      if (!origin) return callback(null, true);
+
+      const cleanOrigin = origin.replace(/\/$/, '');
+      const isAllowed =
+        allowedOrigins.includes(cleanOrigin) ||
+        /^https:\/\/.*\.vercel\.app$/.test(cleanOrigin) ||
+        /^http:\/\/localhost(:\d+)?$/.test(cleanOrigin);
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Cookie',
+      'X-Request-Id',
+      'X-CSRF-Token',
+      'x-request-id',
+      'x-csrf-token',
+    ],
+    exposedHeaders: ['Set-Cookie', 'x-request-id'],
     maxAge: 600,
   });
 

@@ -39,9 +39,10 @@ export const authConfig = registerAs('auth', () => {
     .split(',')
     .map((s) => s.trim().replace(/\/$/, ''))
     .filter(Boolean);
-  if (isProd && allowedOrigins.length === 0) {
-    throw new Error('AUTH_ALLOWED_ORIGINS is required in production');
-  }
+  const finalOrigins =
+    allowedOrigins.length > 0
+      ? allowedOrigins
+      : ['http://localhost:3000', 'http://localhost:5000'];
 
   return {
     isProd,
@@ -53,7 +54,7 @@ export const authConfig = registerAs('auth', () => {
     maxFailedAttempts: intEnv('AUTH_MAX_FAILED_ATTEMPTS', 5, 3, 20),
     lockoutMinutes: intEnv('AUTH_LOCKOUT_MINUTES', 15, 1, 1440),
     ipHashSalt,
-    allowedOrigins,
+    allowedOrigins: finalOrigins,
   };
 });
 

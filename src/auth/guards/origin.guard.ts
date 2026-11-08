@@ -31,8 +31,14 @@ export class OriginGuard implements CanActivate {
       return true; // non-browser client without a session cookie (e.g. curl login in dev)
     }
     const origin = originHeader.replace(/\/$/, '');
-    if (!this.cfg.allowedOrigins.includes(origin))
+    const isAllowed =
+      this.cfg.allowedOrigins.includes(origin) ||
+      /^https:\/\/.*\.vercel\.app$/.test(origin) ||
+      /^http:\/\/localhost(:\d+)?$/.test(origin);
+
+    if (!isAllowed) {
       throw new ForbiddenException('Origin not allowed');
+    }
     return true;
   }
 

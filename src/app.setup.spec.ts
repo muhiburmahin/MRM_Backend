@@ -22,9 +22,33 @@ describe('configureApp', () => {
 
     expect(app.enableCors).toHaveBeenCalledWith(
       expect.objectContaining({
-        origin: ['https://admin.example.com'],
         credentials: true,
+        origin: expect.any(Function),
       }),
     );
+
+    const corsCall = app.enableCors.mock.calls[0][0];
+    const originFn = corsCall.origin as (
+      origin: string | undefined,
+      cb: (err: Error | null, allow?: boolean) => void,
+    ) => void;
+
+    let allowed: boolean | undefined;
+    originFn('https://admin.example.com', (_err, ok) => {
+      allowed = ok;
+    });
+    expect(allowed).toBe(true);
+
+    let vercelAllowed: boolean | undefined;
+    originFn('https://my-preview-app.vercel.app', (_err, ok) => {
+      vercelAllowed = ok;
+    });
+    expect(vercelAllowed).toBe(true);
+
+    let foreignErr: Error | null = null;
+    originFn('https://malicious-site.com', (err) => {
+      foreignErr = err;
+    });
+    expect(foreignErr).toBeTruthy();
   });
 });
