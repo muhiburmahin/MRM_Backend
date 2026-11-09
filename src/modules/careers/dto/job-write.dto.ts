@@ -5,8 +5,8 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
-  IsDate,
   IsEmail,
+  IsDate,
   IsEnum,
   IsOptional,
   IsString,
@@ -15,6 +15,14 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  CleanBlock,
+  CleanLine,
+  IsCleanMessage,
+  IsPersonName,
+  IsStrictEmail,
+  NormalizeEmail,
+} from '../../../common/validators/public-input';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -144,14 +152,15 @@ export class UpdateJobStatusDto {
 
 export class ApplyJobDto {
   @ApiProperty({ example: 'John Doe' })
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @Length(2, 100)
+  @IsPersonName()
   name!: string;
 
   @ApiProperty({ example: 'john@example.com' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
-  @IsEmail()
+  @NormalizeEmail()
+  @IsStrictEmail()
   @MaxLength(254)
   email!: string;
 
@@ -170,9 +179,10 @@ export class ApplyJobDto {
 
   @ApiPropertyOptional({ example: 'I am excited to apply for this role...' })
   @IsOptional()
-  @Transform(trim)
+  @CleanBlock()
   @IsString()
   @MaxLength(5000)
+  @IsCleanMessage(5)
   coverLetter?: string;
 
   @ApiProperty({ example: true })

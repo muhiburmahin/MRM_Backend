@@ -2,26 +2,34 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
-  IsEmail,
   IsOptional,
   IsString,
   Length,
   Matches,
   MaxLength,
 } from 'class-validator';
+import {
+  CleanBlock,
+  CleanLine,
+  IsCleanMessage,
+  IsPersonName,
+  IsStrictEmail,
+  NormalizeEmail,
+} from '../../../common/validators/public-input';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
 export class StartProjectDto {
   @ApiProperty({ example: 'Karim Ahmed' })
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @Length(2, 100)
+  @IsPersonName()
   name!: string;
 
   @ApiProperty({ example: 'karim@company.com' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
-  @IsEmail()
+  @NormalizeEmail()
+  @IsStrictEmail()
   @MaxLength(254)
   email!: string;
 
@@ -33,36 +41,37 @@ export class StartProjectDto {
 
   @ApiPropertyOptional({ example: 'Acme Corporation' })
   @IsOptional()
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @MaxLength(150)
   company?: string;
 
   @ApiPropertyOptional({ example: 'Custom Enterprise Software' })
   @IsOptional()
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @MaxLength(100)
   serviceInterested?: string;
 
   @ApiPropertyOptional({ example: '$10,000 - $25,000' })
   @IsOptional()
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @MaxLength(100)
   budgetRange?: string;
 
   @ApiPropertyOptional({ example: '3-6 months' })
   @IsOptional()
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @MaxLength(100)
   timeline?: string;
 
   @ApiProperty({ example: 'We need a scalable microservices-based logistics platform.' })
-  @Transform(trim)
+  @CleanBlock()
   @IsString()
   @Length(10, 5000)
+  @IsCleanMessage()
   message!: string;
 
   @ApiProperty({

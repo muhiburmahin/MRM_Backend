@@ -2,13 +2,20 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
-  IsEmail,
   IsOptional,
   IsString,
   Length,
   Matches,
   MaxLength,
 } from 'class-validator';
+import {
+  CleanBlock,
+  CleanLine,
+  IsCleanMessage,
+  IsPersonName,
+  IsStrictEmail,
+  NormalizeEmail,
+} from '../../../common/validators/public-input';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -18,14 +25,15 @@ const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? val
  */
 export class CreateContactDto {
   @ApiProperty({ example: 'Rahim Uddin' })
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @Length(2, 100)
+  @IsPersonName()
   name: string;
 
   @ApiProperty({ example: 'rahim@example.com' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
-  @IsEmail()
+  @NormalizeEmail()
+  @IsStrictEmail()
   @MaxLength(254)
   email: string;
 
@@ -37,15 +45,16 @@ export class CreateContactDto {
 
   @ApiPropertyOptional({ example: 'Website development inquiry' })
   @IsOptional()
-  @Transform(trim)
+  @CleanLine()
   @IsString()
   @MaxLength(150)
   subject?: string;
 
   @ApiProperty({ example: 'I would like a quote for a company website.' })
-  @Transform(trim)
+  @CleanBlock()
   @IsString()
   @Length(10, 2000)
+  @IsCleanMessage()
   message: string;
 
   @ApiProperty({

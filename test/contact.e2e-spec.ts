@@ -10,7 +10,7 @@ describe('Contact and leads API (e2e)', () => {
 
   const valid = {
     name: 'Rahim Uddin',
-    email: '  Rahim@Example.com ',
+    email: '  Rahim@Acme-Industries.com ',
     message: 'I would like a quote for a website.',
     consentGiven: true,
   };
@@ -30,7 +30,7 @@ describe('Contact and leads API (e2e)', () => {
       expect(response.body).toMatchObject({ message: expect.any(String) });
       expect(db.contact.rows).toHaveLength(1);
       expect(db.contact.rows[0]).toMatchObject({
-        email: 'rahim@example.com',
+        email: 'rahim@acme-industries.com',
         status: 'NEW',
       });
       expect(db.contact.rows[0].consentAt).toBeInstanceOf(Date);
@@ -49,6 +49,56 @@ describe('Contact and leads API (e2e)', () => {
       expect(db.contact.rows).toHaveLength(0);
     });
 
+    it.each([
+      ['no @ sign', 'plainaddress'],
+      ['missing domain', 'name@'],
+      ['missing local part', '@company.com'],
+      ['no TLD', 'name@company'],
+      ['one-letter TLD', 'name@company.c'],
+      ['numeric TLD / IP literal', 'name@192.168.0.1'],
+      ['consecutive dots', 'na..me@company.com'],
+      ['leading dot in domain', 'name@.company.com'],
+      ['hyphen-edged label', 'name@-company.com'],
+      ['spaces inside', 'na me@company.com'],
+      ['two @ signs', 'a@b@company.com'],
+      ['placeholder domain', 'name@example.com'],
+      ['reserved TLD', 'name@company.test'],
+      ['disposable provider', 'name@mailinator.com'],
+      ['disposable sub-domain', 'name@box.yopmail.com'],
+      ['over-long address', `${'a'.repeat(250)}@company.com`],
+    ])('rejects strict email failure: %s', async (_label, email) => {
+      const response = await publicContact().send({ ...valid, email }).expect(400);
+      expect(JSON.stringify(response.body.details)).toContain('email');
+      expect(db.contact.rows).toHaveLength(0);
+    });
+
+    it.each([
+      ['a numeric name', { name: 'R4him 99' }],
+      ['a URL in the name', { name: 'http://spam.biz' }],
+      ['HTML in the message', { message: 'Hello <script>alert(1)</script> there' }],
+      ['link-stuffed spam', { message: 'see http://a.io http://b.io http://c.io for deals' }],
+      ['a whitespace-only message', { message: '            ' }],
+    ])('rejects %s', async (_label, patch) => {
+      await publicContact().send({ ...valid, ...patch }).expect(400);
+      expect(db.contact.rows).toHaveLength(0);
+    });
+
+    it('accepts international names and plus-addressed emails, normalising whitespace', async () => {
+      await publicContact()
+        .send({ ...valid, name: "  Zoë   O'Brien-Müller ", email: 'zoe+quote@acme-industries.co.uk' })
+        .expect(201);
+      expect(db.contact.rows[0]).toMatchObject({ name: "Zoë O'Brien-Müller", email: 'zoe+quote@acme-industries.co.uk' });
+    });
+
+    it('applies the same strict email rule to the start-project endpoint', async () => {
+      const body = { name: 'Karim Ahmed', email: 'karim@mailinator.com', message: 'We need a logistics platform.', consentGiven: true };
+      await request(app.getHttpServer()).post('/api/v1/contact/start-project').send(body).expect(400);
+      await request(app.getHttpServer())
+        .post('/api/v1/contact/start-project')
+        .send({ ...body, email: 'karim@acme-logistics.com' })
+        .expect(201);
+    });
+
     it('rejects client-supplied restricted fields', async () => {
       for (const extra of [{ status: 'WON' }, { internalNote: 'x' }, { id: 'abc' }]) {
         await publicContact()
@@ -63,7 +113,7 @@ describe('Contact and leads API (e2e)', () => {
     const seed = async (count = 3) => {
       for (let index = 0; index < count; index++) {
         await publicContact()
-          .send({ ...valid, name: `Person ${index}`, email: `p${index}@example.com` })
+          .send({ ...valid, name: `Person ${String.fromCharCode(65 + index)}`, email: `p${index}@acme-industries.com` })
           .expect(201);
       }
     };
@@ -85,7 +135,7 @@ describe('Contact and leads API (e2e)', () => {
       expect(response.body.data).toHaveLength(2);
       expect(response.body.meta).toEqual({ page: 1, limit: 2, total: 3, totalPages: 2 });
 
-      const filtered = await adminLeads().query({ search: 'person 1' }).set(ADMIN).expect(200);
+      const filtered = await adminLeads().query({ search: 'person b' }).set(ADMIN).expect(200);
       expect(filtered.body.data).toHaveLength(1);
       const none = await adminLeads().query({ status: 'WON' }).set(ADMIN).expect(200);
       expect(none.body.data).toHaveLength(0);
@@ -114,7 +164,7 @@ describe('Contact and leads API (e2e)', () => {
       await request(app.getHttpServer())
         .patch(`/api/v1/admin/leads/${lead.id}`)
         .set(ADMIN)
-        .send({ email: 'evil@example.com' })
+        .send({ email: 'evil@acme-industries.com' })
         .expect(400);
     });
 

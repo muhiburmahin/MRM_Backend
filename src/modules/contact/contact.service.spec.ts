@@ -19,7 +19,7 @@ describe('ContactService', () => {
     await expect(
       service.create({
         name: 'Rahim Uddin',
-        email: 'rahim@example.com',
+        email: 'rahim@acme-industries.com',
         message: 'Please contact me about a website.',
         consentGiven: false,
       }),
@@ -32,7 +32,7 @@ describe('ContactService', () => {
     prisma.lead.create.mockResolvedValue({});
     const res = await service.create({
       name: 'Rahim Uddin',
-      email: 'rahim@example.com',
+      email: 'rahim@acme-industries.com',
       subject: 'Website quote',
       message: 'Please contact me about a website.',
       consentGiven: true,
@@ -45,21 +45,21 @@ describe('ContactService', () => {
       ref: expect.stringMatching(/^LD-\d{8}-[0-9A-F]{12}$/),
       type: 'GENERAL',
       name: 'Rahim Uddin',
-      email: 'rahim@example.com',
+      email: 'rahim@acme-industries.com',
       payload: { subject: 'Website quote' },
     });
     expect(input.consentAt).toBeInstanceOf(Date);
     expect(mail.notifyNewLead).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Rahim Uddin',
-        email: 'rahim@example.com',
+        email: 'rahim@acme-industries.com',
         type: 'GENERAL',
       }),
     );
     expect(mail.sendCustomerConfirmation).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Rahim Uddin',
-        email: 'rahim@example.com',
+        email: 'rahim@acme-industries.com',
       }),
     );
   });
@@ -71,7 +71,7 @@ describe('ContactService', () => {
 
     const res = await service.create({
       name: 'Rahim Uddin',
-      email: 'rahim@example.com',
+      email: 'rahim@acme-industries.com',
       message: 'Please contact me.',
       consentGiven: true,
     });
