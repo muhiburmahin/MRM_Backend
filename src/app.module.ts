@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { RequestTimingInterceptor } from './common/interceptors/request-timing.interceptor';
+import { PublicCacheInterceptor } from './common/interceptors/public-cache.interceptor';
 import { REQUEST_ID_HEADER } from './common/constants/api.constants';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfigService } from './config/app-config.service';
@@ -111,6 +112,7 @@ const SAFE_REQUEST_ID = /^[\w-]{8,64}$/; // reject anything that could pollute l
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
     { provide: APP_INTERCEPTOR, useClass: RequestTimingInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: PublicCacheInterceptor },
   ],
 })
 export class AppModule {}
