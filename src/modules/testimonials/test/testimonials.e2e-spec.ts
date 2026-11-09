@@ -55,7 +55,7 @@ describe('Testimonials API (e2e)', () => {
         response.body.data.map((testimonial: { authorName: string }) => testimonial.authorName),
       ).toEqual(['Second Customer', 'First Customer']);
       expect(response.body.meta).toMatchObject({ page: 1, limit: 20, total: 2, totalPages: 1 });
-      expect(response.body.data[0]).toEqual({
+      expect(response.body.data[0]).toMatchObject({
         id: expect.any(String),
         authorName: 'Second Customer',
         authorRole: 'Director',
@@ -185,6 +185,78 @@ describe('Testimonials API (e2e)', () => {
       const created = await create().expect(201);
       await http().delete(`/api/v1/admin/testimonials/${created.body.id}`).set(ADMIN).expect(200);
       await http().delete(`/api/v1/admin/testimonials/${created.body.id}`).set(ADMIN).expect(404);
+    });
+  });
+
+  describe('CMS fields (regression)', () => {
+    it('shows service/project-specific testimonials only for the related slug', async () => {
+      await create(
+        publicTestimonial({ authorName: 'Web Client', serviceSlug: 'web-development', rating: 4 }),
+      ).expect(201);
+      await create(
+        publicTestimonial({ authorName: 'Case Client', projectSlug: 'edumanage-bd', isFeatured: true }),
+      ).expect(201);
+      const web = await http().get('/api/v1/testimonials?serviceSlug=web-development').expect(200);
+      expect(web.body.data.map((t: { authorName: string }) => t.authorName)).toEqual(['Web Client']);
+      expect(web.body.data[0].rating).toBe(4);
+      const none = await http().get('/api/v1/testimonials?serviceSlug=cloud-devops').expect(200);
+      expect(none.body.data).toEqual([]);
+      const project = await http().get('/api/v1/testimonials?projectSlug=edumanage-bd').expect(200);
+      expect(project.body.data.map((t: { authorName: string }) => t.authorName)).toEqual(['Case Client']);
+      const featured = await http().get('/api/v1/testimonials?isFeatured=true').expect(200);
+      expect(featured.body.data).toHaveLength(1);
+    });
+
+    it('clears optional fields with null and keeps omitted fields on PATCH', async () => {
+      const created = await create({
+        authorRole: 'CEO',
+        companyName: 'Acme',
+        avatarUrl: 'https://cdn.example.com/a.png',
+        serviceSlug: 'web-development',
+      }).expect(201);
+      const id = created.body.id;
+      const cleared = await http()
+        .patch(`/api/v1/admin/testimonials/${id}`)
+        .set(ADMIN)
+        .send({ authorRole: null, avatarUrl: null, serviceSlug: null })
+        .expect(200);
+      expect(cleared.body).toMatchObject({
+        authorRole: null,
+        avatarUrl: null,
+        serviceSlug: null,
+        companyName: 'Acme',
+        authorName: 'Rahim Uddin',
+      });
+      const reread = await http().get(`/api/v1/admin/testimonials/${id}`).set(ADMIN).expect(200);
+      expect(reread.body).toMatchObject({ authorRole: null, avatarUrl: null, companyName: 'Acme' });
+    });
+
+    it('rejects clearing required fields instead of failing with a 500', async () => {
+      const created = await create().expect(201);
+      for (const field of ['authorName', 'quote', 'rating', 'sortOrder', 'showOnSite']) {
+        await http()
+          .patch(`/api/v1/admin/testimonials/${created.body.id}`)
+          .set(ADMIN)
+          .send({ [field]: null })
+          .expect(400);
+      }
+    });
+
+    it('rejects unsafe avatar URLs, out-of-range ratings and a missing quote', async () => {
+      await create({ avatarUrl: 'javascript:alert(1)' }).expect(400);
+      await create({ rating: 6 }).expect(400);
+      await create({ rating: 0 }).expect(400);
+      await http().post('/api/v1/admin/testimonials').set(ADMIN).send({ authorName: 'No Quote' }).expect(400);
+      await create({ avatarUrl: '/uploads/photo-1.png' }).expect(201);
+    });
+
+    it('does not let non-admins create, edit or delete testimonials', async () => {
+      const created = await create().expect(201);
+      const url = `/api/v1/admin/testimonials/${created.body.id}`;
+      await http().post('/api/v1/admin/testimonials').set(USER).send(make()).expect(403);
+      await http().patch(url).set(USER).send({ sortOrder: 5 }).expect(403);
+      await http().delete(url).set(USER).expect(403);
+      await http().post('/api/v1/admin/testimonials').send(make()).expect(401);
     });
   });
 });

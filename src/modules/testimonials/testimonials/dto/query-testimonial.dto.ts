@@ -37,6 +37,22 @@ export class QueryTestimonialDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   order: 'asc' | 'desc' = 'asc';
+
+  @ApiPropertyOptional({ description: 'Filter by related service slug' })
+  @IsOptional()
+  @IsString()
+  serviceSlug?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by related project slug' })
+  @IsOptional()
+  @IsString()
+  projectSlug?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by featured testimonials' })
+  @IsOptional()
+  @Transform(toBool)
+  @IsBoolean()
+  isFeatured?: boolean;
 }
 
 /** Admin-only extra filter; public queries cannot see or override publication state. */

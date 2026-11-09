@@ -21,3 +21,6 @@ ALTER TABLE "Lead" ADD CONSTRAINT lead_contactable CHECK ("email" IS NOT NULL OR
 -- Only one active theme, only one default language
 CREATE UNIQUE INDEX one_active_theme ON "Theme" ("isActive") WHERE "isActive" = true;
 CREATE UNIQUE INDEX one_default_language ON "Language" ("isDefault") WHERE "isDefault" = true;
+
+-- Testimonial rating is a 1-5 star value
+ALTER TABLE "Testimonial" ADD CONSTRAINT testimonial_rating_range CHECK ("rating" BETWEEN 1 AND 5);

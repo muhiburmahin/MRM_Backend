@@ -115,27 +115,29 @@ const matchesWhere = (row: Data, where: unknown): boolean => {
   });
 };
 
+const compareValues = (a: unknown, b: unknown): number => {
+  if (a === b) return 0;
+  const leftValue = a instanceof Date ? a.getTime() : a;
+  const rightValue = b instanceof Date ? b.getTime() : b;
+  if (leftValue === undefined) return -1;
+  if (rightValue === undefined) return 1;
+  if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+    return leftValue === rightValue ? 0 : leftValue < rightValue ? -1 : 1;
+  }
+  return String(leftValue).localeCompare(String(rightValue));
+};
+
 const paginate = (rows: Data[], args: Data): Data[] => {
-  const order = asData(args.orderBy);
-  const [[field, direction]] = Object.entries(order);
-  const ordered = field
+  // Prisma accepts a single order object or an array of them (multi-key ordering).
+  const orderList = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
+  const keys = orderList.flatMap((order) => Object.entries(asData(order)));
+  const ordered = keys.length
     ? [...rows].sort((left, right) => {
-        const a = left[field];
-        const b = right[field];
-        if (a === b) return 0;
-        const leftValue = a instanceof Date ? a.getTime() : a;
-        const rightValue = b instanceof Date ? b.getTime() : b;
-        const comparison =
-          leftValue === undefined
-            ? -1
-            : rightValue === undefined
-              ? 1
-              : typeof leftValue === 'number' && typeof rightValue === 'number'
-                ? leftValue < rightValue
-                  ? -1
-                  : 1
-                : String(leftValue).localeCompare(String(rightValue));
-        return direction === 'desc' ? -comparison : comparison;
+        for (const [field, direction] of keys) {
+          const comparison = compareValues(left[field], right[field]);
+          if (comparison !== 0) return direction === 'desc' ? -comparison : comparison;
+        }
+        return 0;
       })
     : [...rows];
   const skip = typeof args.skip === 'number' ? args.skip : 0;
@@ -693,12 +695,22 @@ export class FakePrisma {
         clientId: input.clientId ?? null,
         authorName: input.authorName,
         authorRole: input.authorRole ?? null,
+        companyName: input.companyName ?? null,
+        avatarUrl: input.avatarUrl ?? null,
+        rating: input.rating ?? 5,
+        serviceSlug: input.serviceSlug ?? null,
+        projectSlug: input.projectSlug ?? null,
+        reviewDate: input.reviewDate ?? null,
+        source: input.source ?? 'Direct Client',
+        isFeatured: input.isFeatured ?? false,
         quote: input.quote,
         isVerified: input.isVerified ?? false,
         evidenceNote: input.evidenceNote ?? null,
         consentAt: input.consentAt ?? null,
         showOnSite: input.showOnSite ?? false,
         sortOrder: input.sortOrder ?? 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       this.testimonials.push(testimonial);
       return testimonial;

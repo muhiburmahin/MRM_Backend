@@ -5,6 +5,15 @@ import { SOCIAL_KEYS } from '../team.constants';
 export const Trim = () =>
   Transform(({ value }) => (typeof value === 'string' ? value.trim() : value));
 
+export const TrimToNull = () =>
+  Transform(({ value }) => {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed === '' ? null : trimmed;
+    }
+    return value;
+  });
+
 export const ToBoolean = () =>
   Transform(({ value }) =>
     value === 'true' || value === true

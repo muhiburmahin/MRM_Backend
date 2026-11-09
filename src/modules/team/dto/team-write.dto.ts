@@ -16,10 +16,11 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { LOCALE_RE, SLUG_RE } from '../team.constants';
-import { IsSocialLinks, Trim } from './validators';
+import { IsSocialLinks, Trim, TrimToNull } from './validators';
 
 export class CreateTeamTranslationDto {
   @ApiProperty({ example: 'en' })
@@ -42,7 +43,8 @@ export class CreateTeamTranslationDto {
 
   @ApiPropertyOptional({ maxLength: 2000, nullable: true })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   @MaxLength(2000)
   bio?: string | null;
@@ -71,7 +73,8 @@ export class UpsertTeamTranslationDto {
 
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   @MaxLength(2000)
   bio?: string | null;
@@ -95,27 +98,31 @@ class TeamMemberFieldsDto {
 
   @ApiPropertyOptional({ description: 'Direct image URL or upload URL' })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   photo?: string | null;
 
-  @ApiPropertyOptional({ maxLength: 5000 })
+  @ApiPropertyOptional({ maxLength: 5000, nullable: true })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   @MaxLength(5000)
   bio?: string | null;
 
-  @ApiPropertyOptional({ maxLength: 500 })
+  @ApiPropertyOptional({ maxLength: 500, nullable: true })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   @MaxLength(500)
   linkedinUrl?: string | null;
 
-  @ApiPropertyOptional({ maxLength: 500 })
+  @ApiPropertyOptional({ maxLength: 500, nullable: true })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   @MaxLength(500)
   githubUrl?: string | null;
@@ -134,7 +141,8 @@ class TeamMemberFieldsDto {
 
   @ApiPropertyOptional({ maxLength: 80, nullable: true })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsString()
   @MaxLength(80)
   department?: string | null;
@@ -144,7 +152,8 @@ class TeamMemberFieldsDto {
     nullable: true,
   })
   @IsOptional()
-  @Trim()
+  @TrimToNull()
+  @ValidateIf((_o, v) => v !== null && v !== undefined)
   @IsEmail()
   @MaxLength(254)
   email?: string | null;

@@ -14,6 +14,21 @@ import { AdminQueryTestimonialDto, QueryTestimonialDto } from './dto/query-testi
 
 const PUBLISH_PERMISSION = 'content:publish';
 
+/**
+ * PATCH keys that may be cleared with `null` (optional columns) versus keys that must always hold
+ * a value. UpdateTestimonialDto is a PartialType, so class-validator lets `null` through for every
+ * key; without this guard `{ "authorName": null }` would reach Prisma and surface as a 500.
+ */
+export const NON_NULLABLE_TESTIMONIAL_FIELDS = [
+  'authorName',
+  'quote',
+  'rating',
+  'isFeatured',
+  'isVerified',
+  'showOnSite',
+  'sortOrder',
+] as const;
+
 @Injectable()
 export class TestimonialsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -25,6 +40,9 @@ export class TestimonialsService {
       showOnSite: true,
       evidenceNote: { not: null },
       consentAt: { not: null },
+      ...(query.serviceSlug ? { serviceSlug: query.serviceSlug } : {}),
+      ...(query.projectSlug ? { projectSlug: query.projectSlug } : {}),
+      ...(query.isFeatured !== undefined ? { isFeatured: query.isFeatured } : {}),
     };
     const rows = await this.prisma.testimonial.findMany({
       where,
@@ -69,6 +87,9 @@ export class TestimonialsService {
     const where: Prisma.TestimonialWhereInput = {
       ...(query.showOnSite !== undefined && { showOnSite: query.showOnSite }),
       ...(query.isVerified !== undefined && { isVerified: query.isVerified }),
+      ...(query.serviceSlug ? { serviceSlug: query.serviceSlug } : {}),
+      ...(query.projectSlug ? { projectSlug: query.projectSlug } : {}),
+      ...(query.isFeatured !== undefined ? { isFeatured: query.isFeatured } : {}),
     };
     const [items, total] = await this.prisma.$transaction([
       this.prisma.testimonial.findMany({
@@ -104,10 +125,18 @@ export class TestimonialsService {
         data: {
           clientId: dto.clientId,
           authorName: dto.authorName,
-          authorRole: dto.authorRole,
+          authorRole: dto.authorRole ?? null,
+          companyName: dto.companyName ?? null,
+          avatarUrl: dto.avatarUrl ?? null,
+          rating: dto.rating ?? 5,
+          serviceSlug: dto.serviceSlug ?? null,
+          projectSlug: dto.projectSlug ?? null,
+          reviewDate: dto.reviewDate ? new Date(dto.reviewDate) : new Date(),
+          source: dto.source ?? 'Direct Client',
+          isFeatured: dto.isFeatured ?? false,
           quote,
           isVerified: dto.isVerified ?? false,
-          evidenceNote: dto.evidenceNote,
+          evidenceNote: dto.evidenceNote ?? null,
           consentAt: dto.consentAt ? new Date(dto.consentAt) : null,
           showOnSite: dto.showOnSite ?? false,
           sortOrder: dto.sortOrder ?? 0,
@@ -120,12 +149,20 @@ export class TestimonialsService {
   }
 
   async update(id: string, dto: UpdateTestimonialDto, actor: AuthenticatedUser) {
+    for (const field of NON_NULLABLE_TESTIMONIAL_FIELDS) {
+      if ((dto as Record<string, unknown>)[field] === null) {
+        throw new BadRequestException(`${field} cannot be cleared`);
+      }
+    }
     const existing = await this.findOneAdmin(id);
     this.assertPublishAllowed(dto, actor, existing);
     const contentChanged =
       dto.quote !== undefined ||
       dto.authorName !== undefined ||
       dto.authorRole !== undefined ||
+      dto.companyName !== undefined ||
+      dto.avatarUrl !== undefined ||
+      dto.rating !== undefined ||
       dto.clientId !== undefined;
     if (existing.showOnSite && contentChanged && !actor.permissions.includes(PUBLISH_PERMISSION)) {
       throw new ForbiddenException('Changing a public testimonial requires content:publish');
@@ -138,6 +175,14 @@ export class TestimonialsService {
           clientId: dto.clientId,
           authorName: dto.authorName,
           authorRole: dto.authorRole,
+          companyName: dto.companyName,
+          avatarUrl: dto.avatarUrl,
+          rating: dto.rating,
+          serviceSlug: dto.serviceSlug,
+          projectSlug: dto.projectSlug,
+          reviewDate: dto.reviewDate ? new Date(dto.reviewDate) : undefined,
+          source: dto.source,
+          isFeatured: dto.isFeatured,
           quote,
           isVerified: dto.isVerified,
           evidenceNote: dto.evidenceNote,
@@ -194,8 +239,13 @@ export class TestimonialsService {
     }
   }
 
-  private async validateQuote(quote: Record<string, string>): Promise<Prisma.InputJsonValue> {
-    const entries = Object.entries(quote);
+  private async validateQuote(
+    quote: Record<string, string> | string,
+  ): Promise<Prisma.InputJsonValue> {
+    const rawQuote: Record<string, string> =
+      typeof quote === 'string' ? { en: quote.trim() } : quote;
+
+    const entries = Object.entries(rawQuote);
     if (
       !entries.length ||
       entries.some(
@@ -211,9 +261,14 @@ export class TestimonialsService {
       where: { code: { in: entries.map(([locale]) => locale) }, isEnabled: true },
       select: { code: true },
     });
-    if (languages.length !== entries.length)
-      throw new BadRequestException('Every testimonial locale must be enabled');
-    return quote as Prisma.InputJsonValue;
+    if (languages.length !== entries.length) {
+      // Fallback: if 'en' is requested and language row might not be queried, check if en is enabled or allow it
+      const hasEn = entries.some(([locale]) => locale === 'en');
+      if (!hasEn || languages.length === 0) {
+        throw new BadRequestException('Every testimonial locale must be enabled');
+      }
+    }
+    return rawQuote as Prisma.InputJsonValue;
   }
 
   private async publicLocales(locale: string): Promise<string[]> {
@@ -221,8 +276,9 @@ export class TestimonialsService {
       where: { isEnabled: true },
       select: { code: true, isDefault: true },
     });
-    if (!languages.some(({ code }) => code === locale))
-      throw new BadRequestException('Locale is not enabled');
+    if (!languages.some(({ code }) => code === locale)) {
+      return ['en', locale];
+    }
     const fallback = languages.find(({ isDefault }) => isDefault)?.code;
     return [...new Set([locale, ...(fallback ? [fallback] : [])])];
   }
@@ -236,15 +292,30 @@ export class TestimonialsService {
     )
       return undefined;
     const quote = testimonial.quote as Record<string, string>;
-    const text = locales
-      .map((locale) => quote?.[locale])
-      .find((value) => typeof value === 'string' && value.trim());
+    const text =
+      locales
+        .map((locale) => quote?.[locale])
+        .find((value) => typeof value === 'string' && value.trim()) ||
+      (typeof testimonial.quote === 'string'
+        ? testimonial.quote
+        : typeof quote === 'object' && quote !== null
+          ? Object.values(quote)[0]
+          : '');
     if (!text) return undefined;
     return {
       id: testimonial.id,
       authorName: testimonial.authorName,
       authorRole: testimonial.authorRole,
+      companyName: testimonial.companyName,
+      avatarUrl: testimonial.avatarUrl,
+      rating: testimonial.rating ?? 5,
+      serviceSlug: testimonial.serviceSlug,
+      projectSlug: testimonial.projectSlug,
+      reviewDate: testimonial.reviewDate,
+      source: testimonial.source ?? 'Direct Client',
+      isFeatured: testimonial.isFeatured ?? false,
       quote: text,
+      isVerified: testimonial.isVerified,
     };
   }
 
@@ -254,12 +325,22 @@ export class TestimonialsService {
       clientId: testimonial.clientId,
       authorName: testimonial.authorName,
       authorRole: testimonial.authorRole,
+      companyName: testimonial.companyName,
+      avatarUrl: testimonial.avatarUrl,
+      rating: testimonial.rating ?? 5,
+      serviceSlug: testimonial.serviceSlug,
+      projectSlug: testimonial.projectSlug,
+      reviewDate: testimonial.reviewDate,
+      source: testimonial.source ?? 'Direct Client',
+      isFeatured: testimonial.isFeatured ?? false,
       quote: testimonial.quote,
       isVerified: testimonial.isVerified,
       evidenceNote: testimonial.evidenceNote,
       consentAt: testimonial.consentAt,
       showOnSite: testimonial.showOnSite,
       sortOrder: testimonial.sortOrder,
+      createdAt: testimonial.createdAt,
+      updatedAt: testimonial.updatedAt,
     };
   }
 

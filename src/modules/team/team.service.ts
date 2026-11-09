@@ -425,19 +425,19 @@ export class TeamService {
             ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
             ...(dto.name !== undefined ? { name: dto.name } : {}),
             ...(dto.role !== undefined ? { role: dto.role } : {}),
-            ...(dto.photo !== undefined ? { photo: dto.photo } : {}),
-            ...(dto.bio !== undefined ? { bio: dto.bio } : {}),
-            ...(dto.linkedinUrl !== undefined ? { linkedinUrl: dto.linkedinUrl } : {}),
-            ...(dto.githubUrl !== undefined ? { githubUrl: dto.githubUrl } : {}),
+            ...(dto.photo !== undefined ? { photo: dto.photo ?? null } : {}),
+            ...(dto.bio !== undefined ? { bio: dto.bio ?? null } : {}),
+            ...(dto.linkedinUrl !== undefined ? { linkedinUrl: dto.linkedinUrl ?? null } : {}),
+            ...(dto.githubUrl !== undefined ? { githubUrl: dto.githubUrl ?? null } : {}),
             ...(dto.order !== undefined ? { order: dto.order } : {}),
             ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
             ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
-            ...(dto.department !== undefined ? { department: dto.department } : {}),
+            ...(dto.department !== undefined ? { department: dto.department ?? null } : {}),
             ...(dto.email !== undefined
               ? { email: dto.email ? dto.email.toLowerCase() : null }
               : {}),
             ...(dto.showEmail !== undefined ? { showEmail: dto.showEmail } : {}),
-            ...(dto.photoId !== undefined ? { photoId: dto.photoId } : {}),
+            ...(dto.photoId !== undefined ? { photoId: dto.photoId ?? null } : {}),
             ...(dto.socialLinks !== undefined ? { socialLinks: asJson(dto.socialLinks) } : {}),
             ...(dto.joinedAt !== undefined ? { joinedAt: dto.joinedAt } : {}),
             ...(consent.isPublic !== undefined ? { isPublic: consent.isPublic } : {}),
@@ -453,13 +453,21 @@ export class TeamService {
           const transData: Record<string, string | null> = {};
           if (dto.name !== undefined) transData.name = dto.name;
           if (dto.role !== undefined) transData.roleTitle = dto.role;
-          if (dto.bio !== undefined) transData.bio = dto.bio;
+          if (dto.bio !== undefined) transData.bio = dto.bio ?? null;
 
           if (existingLocales.has('en')) {
             await tx.teamMemberTranslation.update({
               where: { memberId_locale: { memberId: id, locale: 'en' } },
               data: transData,
             });
+          } else if (existingLocales.size > 0) {
+            const firstLocale = cur.translations[0]?.locale;
+            if (firstLocale) {
+              await tx.teamMemberTranslation.update({
+                where: { memberId_locale: { memberId: id, locale: firstLocale } },
+                data: transData,
+              });
+            }
           }
         }
 

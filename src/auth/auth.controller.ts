@@ -147,27 +147,8 @@ export class AuthController {
   })
   @ApiOkResponse({ type: AuthUserResponse })
   @ApiUnauthorizedResponse()
-  me(
-    @CurrentUser() user: AuthenticatedUser,
-    @Req() req: Request,
-  ): AuthUserResponse {
-    let token: string | undefined;
-    const authHeader = req.headers?.authorization;
-    if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-      token = authHeader.substring(7).trim();
-    } else {
-      const rawCookie = req.headers?.cookie;
-      if (rawCookie) {
-        const match = rawCookie.match(/(?:^|; )mrm_session=([^;]*)/);
-        if (match) token = decodeURIComponent(match[1]);
-      }
-    }
-    const res = AuthUserResponse.from(user);
-    if (token) {
-      res.accessToken = token;
-      res.token = token;
-    }
-    return res;
+  me(@CurrentUser() user: AuthenticatedUser): AuthUserResponse {
+    return AuthUserResponse.from(user);
   }
 
   @Post('change-password')

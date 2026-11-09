@@ -3,11 +3,21 @@ model Testimonial {
   clientId     String?   @db.Uuid
   authorName   String
   authorRole   String?
+  companyName  String?
+  avatarUrl    String?
+  rating       Int       @default(5)
+  serviceSlug  String?
+  projectSlug  String?
+  reviewDate   DateTime?
+  source       String?   @default("Direct Client")
+  isFeatured   Boolean   @default(false)
   quote        Json // i18n
   isVerified   Boolean   @default(false)
   evidenceNote String?
   consentAt    DateTime?
   showOnSite   Boolean   @default(false)
   sortOrder    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
   client       Client?   @relation(fields: [clientId], references: [id])
 }

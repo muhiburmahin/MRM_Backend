@@ -370,6 +370,24 @@ describe('TeamService', () => {
         BadRequestException,
       );
     });
+
+    it('persists null to clear bio, linkedinUrl, and synchronizes translation bio to null', async () => {
+      await svc.update('id1', { bio: null, linkedinUrl: null, department: null }, writer);
+      expect(prisma.teamMember.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'id1' },
+          data: expect.objectContaining({
+            bio: null,
+            linkedinUrl: null,
+            department: null,
+          }),
+        }),
+      );
+      expect(prisma.teamMemberTranslation.update).toHaveBeenCalledWith({
+        where: { memberId_locale: { memberId: 'id1', locale: 'en' } },
+        data: expect.objectContaining({ bio: null }),
+      });
+    });
   });
 
   describe('admin delete', () => {
