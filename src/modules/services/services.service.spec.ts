@@ -1,3 +1,4 @@
+import type { Logger } from '@nestjs/common';
 import {
   BadRequestException,
   ConflictException,
@@ -241,7 +242,7 @@ describe('ServicesService', () => {
     });
 
     it('does not fail the request when the audit write fails', async () => {
-      jest.spyOn((svc as any).logger, 'error').mockImplementation(() => {});
+      jest.spyOn((svc as unknown as { logger: Logger }).logger, 'error').mockImplementation(() => {});
       prisma.auditLog.create.mockRejectedValue(new Error('db down'));
       await expect(svc.create(dto, writer)).resolves.toBeDefined();
     });

@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
 import { PrismaService } from '../../database/prisma.service';
 import { AdminQueryTeamDto, QueryTeamDto } from './dto/query-team.dto';
@@ -60,7 +61,7 @@ export class TeamService {
 
   async listPublic(query: QueryTeamDto) {
     const locale = await this.resolveLocale(query.locale);
-    const where: any = {
+    const where: Prisma.TeamMemberWhereInput = {
       isActive: true,
       isPublic: true,
       ...(query.department

@@ -79,11 +79,11 @@ export class ProductMediaItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 }
 
 export class ProductFeatureItemDto {
@@ -98,11 +98,11 @@ export class ProductFeatureItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 
   @ApiProperty()
   @IsString()
@@ -179,11 +179,11 @@ export class ProductBenefitItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 }
 
 export class ProductLinkItemDto {
@@ -198,11 +198,11 @@ export class ProductLinkItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 
   @ApiProperty()
   @IsString()
@@ -250,11 +250,11 @@ export class ProductDemoItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 
   @ApiProperty()
   @IsString()
@@ -297,11 +297,11 @@ export class ProductFaqItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 
   @ApiProperty()
   @IsString()
@@ -378,19 +378,19 @@ export class CreateProductDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  category?: any;
+  category?: Record<string, unknown> | null;
 
   @ApiPropertyOptional()
   @IsOptional()
-  features?: any;
+  features?: ProductFeatureItemDto[];
 
   @ApiPropertyOptional()
   @IsOptional()
-  faqs?: any;
+  faqs?: ProductFaqItemDto[];
 
   @ApiPropertyOptional()
   @IsOptional()
-  seo?: any;
+  seo?: Record<string, unknown> | null;
 
   @ApiProperty({ example: 'edumanage-bd' })
   @IsString()

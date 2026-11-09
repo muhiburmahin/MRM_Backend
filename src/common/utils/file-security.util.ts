@@ -57,7 +57,7 @@ export function validateBufferMagicBytes(buffer: Buffer, mimeType: string): void
     throw new BadRequestException('Empty or missing file buffer.');
   }
 
-  let isValid = false;
+  let isValid: boolean;
 
   switch (mimeType) {
     case 'image/jpeg':

@@ -2,7 +2,6 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
-  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';

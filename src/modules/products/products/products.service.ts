@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ContentStatus, LaunchStage, Prisma } from '@prisma/client';
-import type { Product, ProductTranslation } from '@prisma/client';
+import type { ProductSectionPayload } from './dto/product-section-payload';
 import type { AuthenticatedUser } from '../../../auth/interfaces/authenticated-user.interface';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateProductDto, ProductTranslationDto } from './dto/create-product.dto';
@@ -16,6 +16,26 @@ import { ReorderProductsDto } from './dto/reorder-products.dto';
 import { ProductSection } from './dto/update-product-section.dto';
 
 const PUBLISH_PERMISSION = 'product:publish';
+
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: {
+    translations: true;
+    mediaItems: true;
+    richFeatures: true;
+    benefits: true;
+    links: true;
+    demonstrations: true;
+    productFaqs: true;
+    category: true;
+  };
+}>;
+
+/** A product row as returned by the various queries: relations are present only when that query included them. */
+type ProductRow = Pick<ProductWithRelations, 'id' | 'slug'> &
+  Partial<Omit<ProductWithRelations, 'id' | 'slug'>> & {
+    caseStudies?: unknown[];
+    _count?: Record<string, number>;
+  };
 
 @Injectable()
 export class ProductsService {
@@ -423,7 +443,7 @@ export class ProductsService {
             data: dto.richFeatures.map((f, idx) => ({
               productId: created.id,
               title: f.title,
-              shortDescription: f.shortDescription || (f as any).description || '',
+              shortDescription: f.shortDescription || f.description || '',
               detailedDescription: f.detailedDescription,
               icon: f.icon,
               imageUrl: f.imageUrl,
@@ -605,7 +625,7 @@ export class ProductsService {
               data: dto.richFeatures.map((f, idx) => ({
                 productId: id,
                 title: f.title,
-                shortDescription: f.shortDescription || (f as any).description || '',
+                shortDescription: f.shortDescription || f.description || '',
                 detailedDescription: f.detailedDescription,
                 icon: f.icon,
                 imageUrl: f.imageUrl,
@@ -744,7 +764,7 @@ export class ProductsService {
   async updateSection(
     id: string,
     section: ProductSection,
-    data: Record<string, any>,
+    data: ProductSectionPayload,
     actor: AuthenticatedUser,
   ) {
     await this.findOneAdmin(id);
@@ -782,7 +802,7 @@ export class ProductsService {
             await tx.productMediaItem.deleteMany({ where: { productId: id } });
             if (items.length > 0) {
               await tx.productMediaItem.createMany({
-                data: items.map((m: any, idx: number) => ({
+                data: items.map((m, idx: number) => ({
                   productId: id,
                   url: m.url,
                   mediaType: m.mediaType ?? 'SCREENSHOT',
@@ -798,7 +818,7 @@ export class ProductsService {
             // Sync images array
             await tx.product.update({
               where: { id },
-              data: { images: items.map((m: any) => m.url) },
+              data: { images: items.map((m) => m.url) },
             });
             break;
           }
@@ -808,10 +828,10 @@ export class ProductsService {
             await tx.productFeatureItem.deleteMany({ where: { productId: id } });
             if (items.length > 0) {
               await tx.productFeatureItem.createMany({
-                data: items.map((f: any, idx: number) => ({
+                data: items.map((f, idx: number) => ({
                   productId: id,
                   title: f.title,
-                  shortDescription: f.shortDescription || (f as any).description || '',
+                  shortDescription: f.shortDescription || f.description || '',
                   detailedDescription: f.detailedDescription,
                   icon: f.icon,
                   imageUrl: f.imageUrl,
@@ -829,7 +849,7 @@ export class ProductsService {
             await tx.productBenefit.deleteMany({ where: { productId: id } });
             if (items.length > 0) {
               await tx.productBenefit.createMany({
-                data: items.map((b: any, idx: number) => ({
+                data: items.map((b, idx: number) => ({
                   productId: id,
                   title: b.title,
                   description: b.description,
@@ -846,7 +866,7 @@ export class ProductsService {
             await tx.productLink.deleteMany({ where: { productId: id } });
             if (items.length > 0) {
               await tx.productLink.createMany({
-                data: items.map((l: any, idx: number) => ({
+                data: items.map((l, idx: number) => ({
                   productId: id,
                   title: l.title,
                   url: l.url,
@@ -866,7 +886,7 @@ export class ProductsService {
             await tx.productDemonstration.deleteMany({ where: { productId: id } });
             if (items.length > 0) {
               await tx.productDemonstration.createMany({
-                data: items.map((d: any, idx: number) => ({
+                data: items.map((d, idx: number) => ({
                   productId: id,
                   title: d.title,
                   description: d.description,
@@ -885,7 +905,7 @@ export class ProductsService {
             await tx.productFaqItem.deleteMany({ where: { productId: id } });
             if (items.length > 0) {
               await tx.productFaqItem.createMany({
-                data: items.map((faq: any, idx: number) => ({
+                data: items.map((faq, idx: number) => ({
                   productId: id,
                   question: faq.question,
                   answer: faq.answer,
@@ -938,7 +958,6 @@ export class ProductsService {
                 ogImage: data.ogImage,
                 twitterImage: data.twitterImage,
                 noIndex: data.noIndex,
-                includeInSitemap: data.includeInSitemap,
               },
             });
             break;
@@ -956,7 +975,7 @@ export class ProductsService {
   }
 
   /** Transactional multi-context reordering */
-  async reorder(dto: ReorderProductsDto, actor: AuthenticatedUser) {
+  async reorder(dto: ReorderProductsDto, _actor: AuthenticatedUser) {
     if (!dto.items || dto.items.length === 0) {
       return { success: true, count: 0 };
     }
@@ -980,7 +999,7 @@ export class ProductsService {
   }
 
   /** Duplicate a product as a new DRAFT */
-  async duplicate(id: string, actor: AuthenticatedUser) {
+  async duplicate(id: string, _actor: AuthenticatedUser) {
     const original = await this.findOneAdmin(id);
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const newSlug = `${original.slug}-copy-${randomSuffix}`;
@@ -1019,9 +1038,9 @@ export class ProductsService {
           enableCaseStudies: original.enableCaseStudies,
           enableDemos: original.enableDemos,
           enableFaq: original.enableFaq,
-          displayOrder: original.displayOrder + 10,
-          homepageOrder: original.homepageOrder + 10,
-          navOrder: original.navOrder + 10,
+          displayOrder: (original.displayOrder ?? 0) + 10,
+          homepageOrder: (original.homepageOrder ?? 0) + 10,
+          navOrder: (original.navOrder ?? 0) + 10,
           seoTitle: original.seoTitle,
           seoDescription: original.seoDescription,
         },
@@ -1029,7 +1048,7 @@ export class ProductsService {
 
       if (original.mediaItems && original.mediaItems.length > 0) {
         await tx.productMediaItem.createMany({
-          data: original.mediaItems.map((m: any) => ({
+          data: original.mediaItems.map((m) => ({
             productId: created.id,
             url: m.url,
             mediaType: m.mediaType,
@@ -1045,7 +1064,7 @@ export class ProductsService {
 
       if (original.richFeatures && original.richFeatures.length > 0) {
         await tx.productFeatureItem.createMany({
-          data: original.richFeatures.map((f: any) => ({
+          data: original.richFeatures.map((f) => ({
             productId: created.id,
             title: f.title,
             shortDescription: f.shortDescription,
@@ -1061,7 +1080,7 @@ export class ProductsService {
 
       if (original.benefits && original.benefits.length > 0) {
         await tx.productBenefit.createMany({
-          data: original.benefits.map((b: any) => ({
+          data: original.benefits.map((b) => ({
             productId: created.id,
             title: b.title,
             description: b.description,
@@ -1073,7 +1092,7 @@ export class ProductsService {
 
       if (original.links && original.links.length > 0) {
         await tx.productLink.createMany({
-          data: original.links.map((l: any) => ({
+          data: original.links.map((l) => ({
             productId: created.id,
             title: l.title,
             url: l.url,
@@ -1088,7 +1107,7 @@ export class ProductsService {
 
       if (original.demonstrations && original.demonstrations.length > 0) {
         await tx.productDemonstration.createMany({
-          data: original.demonstrations.map((d: any) => ({
+          data: original.demonstrations.map((d) => ({
             productId: created.id,
             title: d.title,
             description: d.description,
@@ -1102,7 +1121,7 @@ export class ProductsService {
 
       if (original.productFaqs && original.productFaqs.length > 0) {
         await tx.productFaqItem.createMany({
-          data: original.productFaqs.map((faq: any) => ({
+          data: original.productFaqs.map((faq) => ({
             productId: created.id,
             question: faq.question,
             answer: faq.answer,
@@ -1199,10 +1218,10 @@ export class ProductsService {
     return [...new Set([locale, ...(fallback ? [fallback] : [])])];
   }
 
-  private publicProduct(product: any, locales: string[]) {
+  private publicProduct(product: ProductRow, locales: string[]) {
     const translation =
       locales
-        .map((locale) => product.translations?.find((item: any) => item.locale === locale))
+        .map((locale) => product.translations?.find((item) => item.locale === locale))
         .find(Boolean) ?? product.translations?.[0];
 
     const title = product.title || translation?.name || product.slug;
@@ -1226,7 +1245,7 @@ export class ProductsService {
       productType: product.productType,
       images: product.images || [],
       primaryImage:
-        product.mediaItems?.find((m: any) => m.isPrimary)?.url ||
+        product.mediaItems?.find((m) => m.isPrimary)?.url ||
         product.mediaItems?.[0]?.url ||
         product.images?.[0] ||
         null,
@@ -1243,10 +1262,10 @@ export class ProductsService {
     };
   }
 
-  private publicProductDetail(product: any, locales: string[]) {
+  private publicProductDetail(product: ProductRow, locales: string[]) {
     const translation =
       locales
-        .map((locale) => product.translations?.find((item: any) => item.locale === locale))
+        .map((locale) => product.translations?.find((item) => item.locale === locale))
         .find(Boolean) ?? product.translations?.[0];
 
     const title = product.title || translation?.name || product.slug;
@@ -1304,7 +1323,7 @@ export class ProductsService {
     };
   }
 
-  private toAdmin(product: any) {
+  private toAdmin(product: ProductRow) {
     const title = product.title || product.translations?.[0]?.name || product.slug;
     const tagline = product.tagline || product.translations?.[0]?.tagline || '';
     const description = product.description || product.translations?.[0]?.summary || '';
@@ -1342,7 +1361,7 @@ export class ProductsService {
     };
   }
 
-  private toAdminDetail(product: any) {
+  private toAdminDetail(product: ProductRow) {
     const title = product.title || product.translations?.[0]?.name || product.slug;
     const tagline = product.tagline || product.translations?.[0]?.tagline || '';
     const description = product.description || product.translations?.[0]?.summary || '';

@@ -14,10 +14,10 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { ReorderServicesDto } from './dto/reorder-services.dto';
 import { ServiceSection } from './dto/update-service-section.dto';
-import { SERVICE_PERMISSIONS, SortOrder } from './services.constants';
+import type { ServiceSectionPayload } from './dto/service-section-payload';
+import { SERVICE_PERMISSIONS } from './services.constants';
 
 const PUBLISHED = ContentStatus.PUBLISHED;
-const FALLBACK_LOCALE = 'en';
 
 const prismaCode = (err: unknown): string | undefined =>
   typeof err === 'object' && err !== null && 'code' in err
@@ -32,6 +32,42 @@ const meta = (page: number, limit: number, total: number) => ({
   total,
   totalPages: Math.ceil(total / limit),
 });
+
+type ServiceWithRelations = Prisma.ServiceGetPayload<{
+  include: {
+    category: true;
+    offerings: true;
+    benefits: true;
+    processSteps: true;
+    mediaGallery: true;
+    serviceFaqs: true;
+    technologies: { include: { technology: true } };
+    caseStudies: true;
+  };
+}>;
+
+/** A service row as returned by the various queries: relations are present only when that query included them. */
+type ServiceRow = Pick<ServiceWithRelations, 'id' | 'slug'> &
+  Partial<Omit<ServiceWithRelations, 'id' | 'slug' | 'technologies' | 'caseStudies'>> & {
+    technologies?: Array<{ technologyId?: string; technology?: ServiceWithRelations['technologies'][number]['technology'] | null }>;
+    caseStudies?: unknown[];
+    _count?: { leads?: number; caseStudies?: number };
+  };
+
+type RelatedServiceRow = Prisma.ServiceGetPayload<{
+  select: {
+    id: true;
+    slug: true;
+    title: true;
+    name: true;
+    tagline: true;
+    shortDescription: true;
+    icon: true;
+    coverImage: true;
+    coverImageUrl: true;
+    category: { select: { id: true; name: true; slug: true } };
+  };
+}>;
 
 @Injectable()
 export class ServicesService {
@@ -74,7 +110,7 @@ export class ServicesService {
       ];
     }
 
-    let orderBy: Prisma.ServiceOrderByWithRelationInput[] = [];
+    let orderBy: Prisma.ServiceOrderByWithRelationInput[];
     if (placement === 'homepage') {
       orderBy = [{ homepageOrder: 'asc' }, { servicesPageOrder: 'asc' }];
     } else if (placement === 'nav') {
@@ -127,7 +163,7 @@ export class ServicesService {
     };
   }
 
-  async getPublicBySlug(slug: string, localeParam?: string) {
+  async getPublicBySlug(slug: string, _localeParam?: string) {
     const service = await this.prisma.service.findFirst({
       where: {
         slug,
@@ -759,8 +795,8 @@ export class ServicesService {
   async updateSection(
     id: string,
     section: ServiceSection,
-    data: Record<string, any>,
-    actor: AuthenticatedUser,
+    data: ServiceSectionPayload,
+    _actor: AuthenticatedUser,
   ) {
     const existing = await this.prisma.service.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Service not found');
@@ -802,7 +838,7 @@ export class ServicesService {
             await tx.serviceOfferingItem.deleteMany({ where: { serviceId: id } });
             if (items.length > 0) {
               await tx.serviceOfferingItem.createMany({
-                data: items.map((off: any, idx: number) => ({
+                data: items.map((off, idx: number) => ({
                   serviceId: id,
                   title: off.title,
                   shortDescription: off.shortDescription,
@@ -822,7 +858,7 @@ export class ServicesService {
             await tx.serviceBenefitItem.deleteMany({ where: { serviceId: id } });
             if (items.length > 0) {
               await tx.serviceBenefitItem.createMany({
-                data: items.map((b: any, idx: number) => ({
+                data: items.map((b, idx: number) => ({
                   serviceId: id,
                   title: b.title,
                   description: b.description,
@@ -841,7 +877,7 @@ export class ServicesService {
             await tx.serviceProcessStepItem.deleteMany({ where: { serviceId: id } });
             if (items.length > 0) {
               await tx.serviceProcessStepItem.createMany({
-                data: items.map((p: any, idx: number) => ({
+                data: items.map((p, idx: number) => ({
                   serviceId: id,
                   stepNumber: p.stepNumber ?? idx + 1,
                   title: p.title,
@@ -859,7 +895,7 @@ export class ServicesService {
             await tx.serviceMediaItem.deleteMany({ where: { serviceId: id } });
             if (items.length > 0) {
               await tx.serviceMediaItem.createMany({
-                data: items.map((m: any, idx: number) => ({
+                data: items.map((m, idx: number) => ({
                   serviceId: id,
                   url: m.url,
                   videoUrl: m.videoUrl,
@@ -882,7 +918,7 @@ export class ServicesService {
             await tx.serviceFaqItem.deleteMany({ where: { serviceId: id } });
             if (items.length > 0) {
               await tx.serviceFaqItem.createMany({
-                data: items.map((faq: any, idx: number) => ({
+                data: items.map((faq, idx: number) => ({
                   serviceId: id,
                   question: faq.question,
                   answer: faq.answer,
@@ -945,7 +981,7 @@ export class ServicesService {
     }
   }
 
-  async reorder(dto: ReorderServicesDto, actor: AuthenticatedUser) {
+  async reorder(dto: ReorderServicesDto, _actor: AuthenticatedUser) {
     const { placement, items } = dto;
     await this.prisma.$transaction(
       items.map((item) =>
@@ -1018,7 +1054,7 @@ export class ServicesService {
 
       if (existing.offerings.length > 0) {
         await tx.serviceOfferingItem.createMany({
-          data: existing.offerings.map(({ id, serviceId, ...rest }) => ({
+          data: existing.offerings.map(({ id: _id, serviceId: _serviceId, ...rest }) => ({
             ...rest,
             serviceId: created.id,
           })),
@@ -1027,7 +1063,7 @@ export class ServicesService {
 
       if (existing.benefits.length > 0) {
         await tx.serviceBenefitItem.createMany({
-          data: existing.benefits.map(({ id, serviceId, ...rest }) => ({
+          data: existing.benefits.map(({ id: _id, serviceId: _serviceId, ...rest }) => ({
             ...rest,
             serviceId: created.id,
           })),
@@ -1036,7 +1072,7 @@ export class ServicesService {
 
       if (existing.processSteps.length > 0) {
         await tx.serviceProcessStepItem.createMany({
-          data: existing.processSteps.map(({ id, serviceId, ...rest }) => ({
+          data: existing.processSteps.map(({ id: _id, serviceId: _serviceId, ...rest }) => ({
             ...rest,
             serviceId: created.id,
           })),
@@ -1045,7 +1081,7 @@ export class ServicesService {
 
       if (existing.mediaGallery.length > 0) {
         await tx.serviceMediaItem.createMany({
-          data: existing.mediaGallery.map(({ id, serviceId, createdAt, ...rest }) => ({
+          data: existing.mediaGallery.map(({ id: _id, serviceId: _serviceId, createdAt: _createdAt, ...rest }) => ({
             ...rest,
             serviceId: created.id,
           })),
@@ -1054,7 +1090,7 @@ export class ServicesService {
 
       if (existing.serviceFaqs.length > 0) {
         await tx.serviceFaqItem.createMany({
-          data: existing.serviceFaqs.map(({ id, serviceId, ...rest }) => ({
+          data: existing.serviceFaqs.map(({ id: _id, serviceId: _serviceId, ...rest }) => ({
             ...rest,
             serviceId: created.id,
           })),
@@ -1166,7 +1202,7 @@ export class ServicesService {
 
   // ───────────────────────── Object Mapping Helpers ─────────────────────────
 
-  private toPublicSummary(s: any) {
+  private toPublicSummary(s: ServiceRow) {
     const title = s.title || s.name || s.slug;
     const shortDesc = s.shortDescription || s.description || '';
     return {
@@ -1192,7 +1228,7 @@ export class ServicesService {
         ? { id: s.category.id, name: s.category.name, slug: s.category.slug }
         : null,
       categoryName: s.category?.name || 'Custom Engineering',
-      offerings: (s.offerings || []).map((off: any) => ({
+      offerings: (s.offerings || []).map((off) => ({
         id: off.id,
         title: off.title,
         shortDescription: off.shortDescription,
@@ -1201,7 +1237,7 @@ export class ServicesService {
         imageUrl: off.imageUrl,
         displayOrder: off.displayOrder,
       })),
-      technologies: (s.technologies || []).map((t: any) => ({
+      technologies: (s.technologies || []).map((t) => ({
         id: t.technology?.id,
         name: t.technology?.name,
         slug: t.technology?.slug,
@@ -1210,7 +1246,7 @@ export class ServicesService {
     };
   }
 
-  private toPublicDetail(s: any, related: any[]) {
+  private toPublicDetail(s: ServiceRow, related: RelatedServiceRow[]) {
     const title = s.title || s.name || s.slug;
     const shortDesc = s.shortDescription || s.description || '';
     const fullDesc = s.fullDescription || s.description || shortDesc;
@@ -1246,7 +1282,7 @@ export class ServicesService {
       processSteps: s.processSteps || [],
       mediaGallery: s.mediaGallery || [],
       serviceFaqs: s.serviceFaqs || [],
-      technologies: (s.technologies || []).map((t: any) => ({
+      technologies: (s.technologies || []).map((t) => ({
         id: t.technology?.id,
         name: t.technology?.name,
         slug: t.technology?.slug,
@@ -1270,7 +1306,7 @@ export class ServicesService {
     };
   }
 
-  private toAdminSummary(s: any) {
+  private toAdminSummary(s: ServiceRow) {
     const title = s.title || s.name || s.slug;
     return {
       id: s.id,
@@ -1307,7 +1343,7 @@ export class ServicesService {
     };
   }
 
-  private toAdminDetail(s: any) {
+  private toAdminDetail(s: ServiceRow) {
     const title = s.title || s.name || s.slug;
     return {
       id: s.id,

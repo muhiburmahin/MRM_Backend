@@ -5,7 +5,6 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
-  IsString,
   IsUUID,
   Min,
   ValidateNested,

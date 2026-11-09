@@ -69,11 +69,11 @@ export class ServiceOfferingItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 }
 
 export class ServiceBenefitItemDto {
@@ -116,11 +116,11 @@ export class ServiceBenefitItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 }
 
 export class ServiceProcessStepItemDto {
@@ -158,11 +158,11 @@ export class ServiceProcessStepItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 }
 
 export class ServiceMediaItemDto {
@@ -226,11 +226,11 @@ export class ServiceMediaItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 }
 
 export class ServiceFaqItemDto {
@@ -263,11 +263,35 @@ export class ServiceFaqItemDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
+}
+
+/** One locale of a service's translated content, as sent by the admin UI. */
+export class ServiceTranslationInputDto {
+  @ApiProperty({ example: 'en' })
+  locale!: string;
+
+  @ApiPropertyOptional()
+  name?: string;
+
+  @ApiPropertyOptional()
+  summary?: string;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  body?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  status?: string;
+
+  @ApiPropertyOptional()
+  seoTitle?: string;
+
+  @ApiPropertyOptional()
+  seoDescription?: string;
 }
 
 export class CreateServiceDto {
@@ -281,19 +305,19 @@ export class CreateServiceDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  category?: any;
+  category?: Record<string, unknown> | null;
 
   @ApiPropertyOptional()
   @IsOptional()
-  seo?: any;
+  seo?: Record<string, unknown> | null;
 
   @ApiPropertyOptional()
   @IsOptional()
-  createdAt?: any;
+  createdAt?: string | Date;
 
   @ApiPropertyOptional()
   @IsOptional()
-  updatedAt?: any;
+  updatedAt?: string | Date;
 
   @ApiProperty({ example: 'web-development' })
   @IsString()
@@ -407,7 +431,7 @@ export class CreateServiceDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsArray()
-  translations?: any[];
+  translations?: ServiceTranslationInputDto[];
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
@@ -588,7 +612,7 @@ export class CreateServiceDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsArray()
-  technologies?: any[];
+  technologies?: Array<Record<string, unknown>>;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -1,3 +1,4 @@
+import type { Logger } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { MailConfig } from './mail.config';
 import { MailTransport } from './mail-transport.interface';
@@ -62,7 +63,7 @@ describe('MailService', () => {
   it('handles transport failure gracefully without throwing', async () => {
     mockTransport.send.mockRejectedValue(new Error('Connection timed out'));
     const svc = new MailService(baseConfig, mockTransport);
-    jest.spyOn((svc as any).logger, 'warn').mockImplementation(() => {});
+    jest.spyOn((svc as unknown as { logger: Logger }).logger, 'warn').mockImplementation(() => {});
     const result = await svc.notifyNewLead({
       ref: 'LD-20261031-112233',
       name: 'John Doe',
@@ -92,7 +93,7 @@ describe('MailService', () => {
 
   it('safely handles missing recipient configuration without crashing', async () => {
     const svc = new MailService({ ...baseConfig, notifyRecipient: '' }, mockTransport);
-    jest.spyOn((svc as any).logger, 'warn').mockImplementation(() => {});
+    jest.spyOn((svc as unknown as { logger: Logger }).logger, 'warn').mockImplementation(() => {});
     const result = await svc.notifyNewLead({
       ref: 'LD-20261031-112233',
       name: 'John Doe',
